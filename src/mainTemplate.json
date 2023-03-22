@@ -556,6 +556,17 @@
         "description": "Optionally add a virtual machine to the deployment which can be used to connect and manage virtual machines within the cluster. Not required if installing Kibana, as Kibana can be used as a jumpbox"
       }
     },
+    "vmSizeJumpbox": {
+      "type": "string",
+      "defaultValue": "Standard_A0",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_B1_s"
+      ],
+      "metadata": {
+        "description": "Size of the Jumpbox nodes"
+      }
+    },  
     "vmHostNamePrefix": {
       "type": "string",
       "defaultValue": "",
@@ -1924,6 +1935,7 @@
       "vmSizeMasterNodes": "[parameters('vmSizeMasterNodes')]",
       "vmMasterNodeAcceleratedNetworking": "[parameters('vmMasterNodeAcceleratedNetworking')]",
       "vmSizeKibana": "[parameters('vmSizeKibana')]",
+      "vmSizeJumpbox": "[parameters('vmSizeJumpbox')]",
       "vmKibanaAcceleratedNetworking": "[parameters('vmKibanaAcceleratedNetworking')]",
       "kibana": "[parameters('kibana')]",
       "kibanaKeyBlob": "[parameters('kibanaKeyBlob')]",

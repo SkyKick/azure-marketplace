@@ -297,6 +297,9 @@
           "osSettings": {
             "value": "[parameters('osSettings')]"
           },
+          "vmSize": {
+            "value": "[parameters('topologySettings').vmSizeJumpbox]"
+          },
           "elasticTags": {
             "value": "[parameters('elasticTags')]"
           }
