@@ -38,6 +38,13 @@
         "description": "Elasticsearch deployment platform settings"
       }
     },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A0",
+      "metadata": {
+        "description": "Size of the jumpbox VM"
+      }
+    },
     "elasticTags": {
       "type": "object",
       "defaultValue": {
@@ -50,7 +57,6 @@
   },
   "variables": {
     "namespace": "[parameters('namespace')]",
-    "vmSize": "Standard_A0",
     "subnetRef": "[concat(resourceId(parameters('networkSettings').resourceGroup, 'Microsoft.Network/virtualNetworks', parameters('networkSettings').name), '/subnets/', parameters('networkSettings').subnet.name)]",
     "publicIpName": "[concat(variables('namespace'), '-ip')]",
     "securityGroupName": "[concat(variables('namespace'), '-nsg')]",
@@ -163,7 +169,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": "[variables('osProfile')]",
         "storageProfile": {
