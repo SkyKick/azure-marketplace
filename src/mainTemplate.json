@@ -561,7 +561,7 @@
       "defaultValue": "Standard_A0",
       "allowedValues": [
         "Standard_A0",
-        "Standard_B1_s"
+        "Standard_B1s"
       ],
       "metadata": {
         "description": "Size of the Jumpbox nodes"
@@ -684,7 +684,7 @@
         "Standard_L8s",
         "Standard_L16s",
         "Standard_L32s",
-		"Standard_L8s_v2",
+		    "Standard_L8s_v2",
         "Standard_L16s_v2",
         "Standard_L32s_v2",
         "Standard_L48s_v2",
