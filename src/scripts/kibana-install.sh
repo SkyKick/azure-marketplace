@@ -67,6 +67,7 @@ KIBANA_VERSION="6.4.1"
 #Default internal load balancer ip
 ELASTICSEARCH_URL="http://10.0.0.4:9200"
 INSTALL_XPACK=0
+BASIC_SECURITY=0
 USER_KIBANA_PWD="changeme"
 SSL_CERT=""
 SSL_KEY=""
@@ -140,22 +141,56 @@ done
 # Parameter state changes
 #########################
 
-log "Installing Kibana $KIBANA_VERSION for Elasticsearch cluster: $CLUSTER_NAME"
-log "Installing X-Pack plugins is set to: $INSTALL_XPACK"
+# supports security features with a basic license
+if [[ $(dpkg --compare-versions "$KIBANA_VERSION" "ge" "7.1.0"; echo $?) -eq 0 || ($(dpkg --compare-versions "$KIBANA_VERSION" "ge" "6.8.0"; echo $?) -eq 0 && $(dpkg --compare-versions "$KIBANA_VERSION" "lt" "7.0.0"; echo $?) -eq 0) ]]; then
+  BASIC_SECURITY=1
+fi
+
+log "installing Kibana $KIBANA_VERSION for Elasticsearch cluster: $CLUSTER_NAME"
+log "installing X-Pack plugins is set to: $INSTALL_XPACK"
+log "basic security is set to: $BASIC_SECURITY"
 log "Kibana will talk to Elasticsearch over $ELASTICSEARCH_URL"
 
 #########################
 # Installation steps as functions
 #########################
 
+random_password()
+{ 
+  < /dev/urandom tr -dc '!@#$%_A-Z-a-z-0-9' | head -c${1:-64}
+  echo
+}
+
+keystore_cmd()
+{
+  if [[ $(dpkg --compare-versions "$KIBANA_VERSION" "ge" "7.11.0"; echo $?) -eq 0 || $(dpkg --compare-versions "$KIBANA_VERSION" "lt" "7.9.0"; echo $?) -eq 0 ]]; then
+    sudo -u kibana /usr/share/kibana/bin/kibana-keystore "$@"
+  else
+    # keystore is created in /etc/kibana/kibana.keystore in 7.9.x and 7.10.x
+    # but need to create with root due to permissions
+    /usr/share/kibana/bin/kibana-keystore "$@" --allow-root
+  fi
+}
+
+create_keystore_if_not_exists()
+{
+  local KEYSTORE_FILE=/var/lib/kibana/kibana.keystore
+  if dpkg --compare-versions "$KIBANA_VERSION" "ge" "7.9.0"; then
+    KEYSTORE_FILE=/etc/kibana/kibana.keystore
+  fi
+
+  if [[ -f $KEYSTORE_FILE ]]; then 
+    log "[create_keystore_if_not_exists] kibana.keystore exists at $KEYSTORE_FILE"
+  else
+    log "[create_keystore_if_not_exists] create kibana.keystore"
+    keystore_cmd create
+  fi
+}
+
 install_kibana()
 {
     local PACKAGE="kibana-$KIBANA_VERSION-amd64.deb"
     local ALGORITHM="512"
-    if dpkg --compare-versions "$KIBANA_VERSION" "lt" "5.6.2"; then
-      ALGORITHM="1"
-    fi
-
     local SHASUM="$PACKAGE.sha$ALGORITHM"
     local DOWNLOAD_URL="https://artifacts.elastic.co/downloads/kibana/$PACKAGE?ultron=msft&gambit=azure"
     local SHASUM_URL="https://artifacts.elastic.co/downloads/kibana/$SHASUM?ultron=msft&gambit=azure"
@@ -163,14 +198,14 @@ install_kibana()
     log "[install_kibana] download Kibana $KIBANA_VERSION"
     wget --retry-connrefused --waitretry=1 -q "$SHASUM_URL" -O $SHASUM
     local EXIT_CODE=$?
-    if [ $EXIT_CODE -ne 0 ]; then
+    if [[ $EXIT_CODE -ne 0 ]]; then
         log "[install_kibana] error downloading Kibana $KIBANA_VERSION sha$ALGORITHM checksum"
         exit $EXIT_CODE
     fi
     log "[install_kibana] download location $DOWNLOAD_URL"
     wget --retry-connrefused --waitretry=1 -q "$DOWNLOAD_URL" -O $PACKAGE
     EXIT_CODE=$?
-    if [ $EXIT_CODE -ne 0 ]; then
+    if [[ $EXIT_CODE -ne 0 ]]; then
         log "[install_kibana] error downloading Kibana $KIBANA_VERSION"
         exit $EXIT_CODE
     fi
@@ -181,7 +216,7 @@ install_kibana()
 
     shasum -a $ALGORITHM -c $SHASUM
     EXIT_CODE=$?
-    if [ $EXIT_CODE -ne 0 ]; then
+    if [[ $EXIT_CODE -ne 0 ]]; then
         log "[install_kibana] error validating checksum for Kibana $KIBANA_VERSION"
         exit $EXIT_CODE
     fi
@@ -204,34 +239,48 @@ configure_kibana_yaml()
     log "[configure_kibana_yaml] Configuring kibana.yml"
 
     # set the elasticsearch URL
-    echo "elasticsearch.url: \"$ELASTICSEARCH_URL\"" >> $KIBANA_CONF
-    echo "server.host:" $(hostname -I) >> $KIBANA_CONF
+    if dpkg --compare-versions "$KIBANA_VERSION" "lt" "7.0.0"; then
+      echo "elasticsearch.url: \"$ELASTICSEARCH_URL\"" >> $KIBANA_CONF
+    else
+      echo "elasticsearch.hosts: [\"$ELASTICSEARCH_URL\"]" >> $KIBANA_CONF
+    fi
+    
+    echo "server.host: $(hostname -i)" >> $KIBANA_CONF
     # specify kibana log location
     echo "logging.dest: /var/log/kibana.log" >> $KIBANA_CONF
     touch /var/log/kibana.log
     chown kibana: /var/log/kibana.log
 
-    # set logging to silent by default
-    echo "logging.silent: true" >> $KIBANA_CONF
+    # set logging to quiet by default. Note that kibana does not have
+    # a log file rotation policy, so the log file should be monitored
+    echo "logging.quiet: true" >> $KIBANA_CONF
+
+    # configure security
+    local ENCRYPTION_KEY
+
+    if [[ ${INSTALL_XPACK} -ne 0 || ${BASIC_SECURITY} -ne 0 ]]; then
+      local KIBANA_USER="kibana"
+      if dpkg --compare-versions "$KIBANA_VERSION" "ge" "7.8.0"; then
+        KIBANA_USER="kibana_system"
+      fi 
+      echo "elasticsearch.username: $KIBANA_USER" >> $KIBANA_CONF
+
+      # store credentials in the keystore
+      create_keystore_if_not_exists
+      log "[configure_kibana_yaml] Adding elasticsearch.password to kibana.keystore"
+      echo "# elasticsearch.password added to kibana.keystore" >> $KIBANA_CONF
+      echo "$USER_KIBANA_PWD" | keystore_cmd add "elasticsearch.password" --stdin --force
+
+      ENCRYPTION_KEY=$(random_password)
+      echo "xpack.security.encryptionKey: \"$ENCRYPTION_KEY\"" >> $KIBANA_CONF
+      log "[configure_kibana_yaml] X-Pack Security encryption key generated"
+    fi
 
     # install x-pack
     if [ ${INSTALL_XPACK} -ne 0 ]; then
-      echo "elasticsearch.username: kibana" >> $KIBANA_CONF
-      echo "elasticsearch.password: \"$USER_KIBANA_PWD\"" >> $KIBANA_CONF
-
-      install_pwgen
-      local ENCRYPTION_KEY=$(pwgen 64 1)
-      echo "xpack.security.encryptionKey: \"$ENCRYPTION_KEY\"" >> $KIBANA_CONF
-      log "[configure_kibana_yaml] X-Pack Security encryption key generated"
-      ENCRYPTION_KEY=$(pwgen 64 1)
+      ENCRYPTION_KEY=$(random_password)
       echo "xpack.reporting.encryptionKey: \"$ENCRYPTION_KEY\"" >> $KIBANA_CONF
       log "[configure_kibana_yaml] X-Pack Reporting encryption key generated"
-
-      if dpkg --compare-versions "$KIBANA_VERSION" "lt" "6.3.0"; then
-        log "[configure_kibana_yaml] Installing X-Pack plugin"
-        /usr/share/kibana/bin/kibana-plugin install x-pack
-        log "[configure_kibana_yaml] Installed X-Pack plugin"
-      fi
     fi
 
     # configure HTTPS if cert and private key supplied
@@ -247,14 +296,22 @@ configure_kibana_yaml()
       echo "server.ssl.key: $SSL_PATH/kibana.key" >> $KIBANA_CONF
       echo "server.ssl.certificate: $SSL_PATH/kibana.crt" >> $KIBANA_CONF
       if [[ -n "${SSL_PASSPHRASE}" ]]; then
-          echo "server.ssl.keyPassphrase: \"$SSL_PASSPHRASE\"" >> $KIBANA_CONF
+          log "[configure_kibana_yaml] Adding server.ssl.keyPassphrase to kibana.keystore"
+          create_keystore_if_not_exists
+          echo "# server.ssl.keyPassphrase added to kibana.keystore" >> $KIBANA_CONF
+          echo "$SSL_PASSPHRASE" | keystore_cmd add "server.ssl.keyPassphrase" --stdin --force
       fi
       log "[configure_kibana_yaml] Configured SSL/TLS to Kibana"
     fi
 
     # configure HTTPS communication with Elasticsearch if cert supplied and x-pack installed.
     # Kibana x-pack installed implies it's also installed for Elasticsearch
-    if [[ -n "${HTTP_CERT}" || -n "${HTTP_CACERT}" && ${INSTALL_XPACK} -ne 0 ]]; then
+    local INSTALL_CERTS=0
+    if [[ ${INSTALL_XPACK} -ne 0 || ${BASIC_SECURITY} -ne 0 ]]; then
+      INSTALL_CERTS=1
+    fi
+
+    if [[ -n "${HTTP_CERT}" || -n "${HTTP_CACERT}" && ${INSTALL_CERTS} -ne 0 ]]; then
       [ -d $SSL_PATH ] || mkdir -p $SSL_PATH
 
       if [[ -n "${HTTP_CERT}" ]]; then
@@ -301,27 +358,38 @@ configure_kibana_yaml()
     # Configure SAML Single-Sign-On
     if [[ -n "$SAML_SP_URI" && ${INSTALL_XPACK} -ne 0 ]]; then
       log "[configure_kibana_yaml] Configuring Kibana for SAML Single-Sign-On"
-      # Allow both saml and basic realms
-      echo "xpack.security.authProviders: [ saml,basic ]" >> $KIBANA_CONF
-      echo "server.xsrf.whitelist: [ /api/security/v1/saml ]" >> $KIBANA_CONF
 
-      local PROTOCOL="`echo $SAML_SP_URI | grep '://' | sed -e's,^\(.*://\).*,\1,g'`"
-      local HOSTNAME_AND_PORT=`echo $SAML_SP_URI | sed -e s,$PROTOCOL,,g`
-      local HOSTNAME=`echo $HOSTNAME_AND_PORT | sed -e s,.*@,,g | cut -d: -f1`
-      local PORT=`echo $HOSTNAME_AND_PORT | grep : | cut -d: -f2`
-      if [[ -z "$PORT" ]]; then
-        if [[ "$PROTOCOL" == "https://" ]]; then
-          PORT=443
-        else
-          PORT=80
+      if dpkg --compare-versions "$KIBANA_VERSION" "lt" "7.7.0"; then
+        # Allow both saml and basic realms
+        echo "xpack.security.authProviders: [ saml, basic ]" >> $KIBANA_CONF
+        echo "server.xsrf.whitelist: [ /api/security/v1/saml ]" >> $KIBANA_CONF
+
+        local PROTOCOL="`echo $SAML_SP_URI | grep '://' | sed -e's,^\(.*://\).*,\1,g'`"
+        local HOSTNAME_AND_PORT=`echo $SAML_SP_URI | sed -e s,$PROTOCOL,,g`
+        local HOSTNAME=`echo $HOSTNAME_AND_PORT | sed -e s,.*@,,g | cut -d: -f1`
+        local PORT=`echo $HOSTNAME_AND_PORT | grep : | cut -d: -f2`
+        if [[ -z "$PORT" ]]; then
+          if [[ "$PROTOCOL" == "https://" ]]; then
+            PORT=443
+          else
+            PORT=80
+          fi
         fi
+
+        # Kibana is reached through a Public IP address (or a provided URI)
+        # so needs to be configured with this for SAML SSO
+        echo "xpack.security.public.protocol: ${PROTOCOL%://}" >> $KIBANA_CONF
+        echo "xpack.security.public.hostname: \"${HOSTNAME%/}\"" >> $KIBANA_CONF
+        echo "xpack.security.public.port: ${PORT%/}" >> $KIBANA_CONF
+      else
+        # Use simpler configuration for 7.7.0+
+        echo "xpack.security.authc.providers.saml.saml1.order: 0" >> $KIBANA_CONF
+        echo "xpack.security.authc.providers.saml.saml1.realm: \"saml_aad\"" >> $KIBANA_CONF
+        echo "xpack.security.authc.providers.saml.saml1.description: \"Log in with Azure\"" >> $KIBANA_CONF
+        echo "xpack.security.authc.providers.saml.saml1.icon: \"logoAzure\"" >> $KIBANA_CONF
+        echo "xpack.security.authc.providers.basic.basic1.order: 1" >> $KIBANA_CONF
       fi
 
-      # Kibana is reached through a Public IP address (or a provided URI)
-      # so needs to be configured with this for SAML SSO
-      echo "xpack.security.public.protocol: ${PROTOCOL%://}" >> $KIBANA_CONF
-      echo "xpack.security.public.hostname: \"${HOSTNAME%/}\"" >> $KIBANA_CONF
-      echo "xpack.security.public.port: ${PORT%/}" >> $KIBANA_CONF
       log "[configure_kibana_yaml] Configured Kibana for SAML Single-Sign-On"
     fi
 
@@ -336,6 +404,9 @@ configure_kibana_yaml()
         SKIP_LINES+="elasticsearch.ssl.ca elasticsearch.ssl.keyPassphrase elasticsearch.ssl.verify "
         SKIP_LINES+="xpack.security.authProviders server.xsrf.whitelist "
         SKIP_LINES+="xpack.security.public.protocol xpack.security.public.hostname xpack.security.public.port "
+        SKIP_LINES+="xpack.security.authc.providers.saml.saml1.order xpack.security.authc.providers.saml.saml1.realm "
+        SKIP_LINES+="xpack.security.authc.providers.saml.saml1.description xpack.security.authc.providers.basic.basic1.order "
+        SKIP_LINES+="xpack.security.authc.providers.saml.saml1.icon "
         local SKIP_REGEX="^\s*("$(echo $SKIP_LINES | tr " " "|" | sed 's/\./\\\./g')")"
         IFS=$'\n'
         for LINE in $(echo -e "$YAML_CONFIGURATION"); do
@@ -355,7 +426,7 @@ configure_kibana_yaml()
         LINT=$(yamllint -d "{extends: relaxed, rules: {key-duplicates: {level: error}}}" $KIBANA_CONF; exit ${PIPESTATUS[0]})
         EXIT_CODE=$?
         log "[configure_kibana_yaml] ran yaml lint (exit code $EXIT_CODE) $LINT"
-        if [ $EXIT_CODE -ne 0 ]; then
+        if [[ $EXIT_CODE -ne 0 ]]; then
             log "[configure_kibana_yaml] errors in yaml configuration. exiting"
             exit 11
         fi
@@ -368,13 +439,15 @@ install_apt_package()
   if [ $(dpkg-query -W -f='${Status}' $PACKAGE 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
     log "[install_$PACKAGE] installing $PACKAGE"
     (apt-get -yq install $PACKAGE || (sleep 15; apt-get -yq install $PACKAGE))
+    local EXIT_CODE=$?
+    if [[ $EXIT_CODE -ne 0 ]]; then
+      "[install_$PACKAGE] installing $PACKAGE returned non-zero exit code: $EXIT_CODE"
+      exit $EXIT_CODE
+    fi
     log "[install_$PACKAGE] installed $PACKAGE"
+  else
+    log "[install_$PACKAGE] already installed $PACKAGE"
   fi
-}
-
-install_pwgen()
-{
-    install_apt_package pwgen
 }
 
 install_yamllint()
@@ -415,6 +488,11 @@ fi
 
 log "[apt-get] updating apt-get"
 (apt-get -y update || (sleep 15; apt-get -y update))
+EXIT_CODE=$?
+if [[ $EXIT_CODE -ne 0 ]]; then
+  log "[apt-get] failed updating apt-get. exit code: $EXIT_CODE"
+  exit $EXIT_CODE
+fi
 log "[apt-get] updated apt-get"
 
 install_kibana

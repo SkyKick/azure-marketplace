@@ -1,13 +1,7 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "templateBaseUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "Base uri of resources"
-      }
-    },
     "vm": {
       "type": "object",
       "metadata": {
@@ -23,7 +17,7 @@
     "availabilitySet": {
       "type": "string",
       "metadata": {
-        "description": "Base uri of resources"
+        "description": "The name of the availability set"
       }
     },
     "dataDisks": {
@@ -68,36 +62,90 @@
         }
       }
     },
-    "osProfile": "[variables(concat(parameters('vm').shared.credentials.authenticationType, '_osProfile'))]"
+    "osProfile": "[variables(concat(parameters('vm').shared.credentials.authenticationType, '_osProfile'))]",
+    "publicIpName": "[concat(variables('namespace'), parameters('index'), '-ip')]",
+    "nsgIpConfigs": [
+      {},
+      {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('vm').nsg)]"
+        }
+      },
+      {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('vm').nsg)]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "primary": true,
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('vm').shared.subnetId]"
+              },
+              "loadBalancerBackendAddressPools": "[parameters('vm').backendPools]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "nsgIpConfig": "[variables('nsgIpConfigs')[if(empty(parameters('vm').nsg), 0, if(parameters('vm').standardInternalLoadBalancer, 2, 1))]]",
+    "nicProperties": {
+      "primary": true,
+      "enableAcceleratedNetworking": "[equals(parameters('vm').acceleratedNetworking, 'Yes')]",
+      "ipConfigurations": [
+        {
+          "name": "ipconfig1",
+          "properties": {
+            "privateIPAllocationMethod": "Dynamic",
+            "subnet": {
+              "id": "[parameters('vm').shared.subnetId]"
+            },
+            "loadBalancerBackendAddressPools": "[parameters('vm').backendPools]"
+          }
+        }
+      ]
+    }
   },
   "resources": [
     {
-      "apiVersion": "2017-10-01",
+      "condition": "[and(not(empty(parameters('vm').nsg)), parameters('vm').standardInternalLoadBalancer)]",
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIpName')]",
+      "location": "[parameters('vm').shared.location]",
+      "sku": {
+        "name": "Standard"
+      },
+      "tags": {
+        "provider": "[toUpper(parameters('elasticTags').provider)]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('namespace'), parameters('index'), uniqueString(resourceGroup().id, deployment().name))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('namespace'), parameters('index'), '-nic')]",
       "location": "[parameters('vm').shared.location]",
       "tags": {
         "provider": "[toUpper(parameters('elasticTags').provider)]"
       },
-      "properties": {
-        "primary": true,
-        "enableAcceleratedNetworking": "[equals(parameters('vm').acceleratedNetworking, 'Yes')]",
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[parameters('vm').shared.subnetId]"
-              },
-              "loadBalancerBackendAddressPools": "[parameters('vm').backendPools]"
-            }
-          }
-        ]
-      }
+      "dependsOn": [
+        "[variables('publicIpName')]"
+      ],
+      "properties": "[union(variables('nicProperties'), variables('nsgIpConfig'))]"
     },
     {
-      "apiVersion": "2017-12-01",
+      "apiVersion": "2019-03-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('namespace'), parameters('index'))]",
       "location": "[parameters('vm').shared.location]",
@@ -105,7 +153,7 @@
         "provider": "[toUpper(parameters('elasticTags').provider)]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('namespace'), parameters('index'), '-nic')]"
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('namespace'), parameters('index'), '-nic'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -139,10 +187,10 @@
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(variables('namespace'), parameters('index'), '/script')]",
-          "apiVersion": "2017-12-01",
+          "apiVersion": "2019-03-01",
           "location": "[parameters('vm').shared.location]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('namespace'), parameters('index'))]"
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('namespace'), parameters('index')))]"
           ],
           "properties": "[parameters('vm').installScript]"
         }
