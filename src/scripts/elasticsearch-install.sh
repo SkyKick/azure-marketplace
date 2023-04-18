@@ -61,6 +61,8 @@ help()
 
     echo "    -M      set the API Key for DataDog Agent installation"
 
+    echo "    -b      Enable Basic Security"
+
     echo "    -h      view this help content"
 }
 
@@ -155,7 +157,7 @@ SAML_METADATA_URI=""
 SAML_SP_URI=""
 
 #Loop through options passed
-while getopts :n:m:v:A:R:M:K:S:F:Z:p:a:k:L:C:B:E:H:G:T:W:V:J:N:D:O:P:xyzldjh optname; do
+while getopts :n:m:v:A:R:M:K:S:F:Z:p:a:k:L:C:B:E:H:G:T:W:V:J:N:D:O:P:b:xyzldjh optname; do
   log "Option $optname set"
   case $optname in
     n) #set cluster name
@@ -190,6 +192,9 @@ while getopts :n:m:v:A:R:M:K:S:F:Z:p:a:k:L:C:B:E:H:G:T:W:V:J:N:D:O:P:xyzldjh opt
       ;;
     Z) #number of data nodes hints (used to calculate minimum master nodes)
       DATANODE_COUNT=${OPTARG}
+      ;;
+    b) #enable basic security
+      BASIC_SECURITY=1
       ;;
     x) #master node
       MASTER_ONLY_NODE=1
@@ -279,10 +284,12 @@ done
 # Parameter state changes
 #########################
 
+# Don't force security to be ON, pass in a parameter to the script to do this
+# We need to support old clusters that don't have security turned on and new clusters where we might want to turn in on
 # supports security features with a basic license
-if [[ $(dpkg --compare-versions "$ES_VERSION" "ge" "7.1.0"; echo $?) -eq 0 || ($(dpkg --compare-versions "$ES_VERSION" "ge" "6.8.0"; echo $?) -eq 0 && $(dpkg --compare-versions "$ES_VERSION" "lt" "7.0.0"; echo $?) -eq 0) ]]; then
-  BASIC_SECURITY=1
-fi
+# if [[ $(dpkg --compare-versions "$ES_VERSION" "ge" "7.1.0"; echo $?) -eq 0 || ($(dpkg --compare-versions "$ES_VERSION" "ge" "6.8.0"; echo $?) -eq 0 && $(dpkg --compare-versions "$ES_VERSION" "lt" "7.0.0"; echo $?) -eq 0) ]]; then
+#   BASIC_SECURITY=1
+# fi
 
 # zen2 should emit the ports from hosts
 if dpkg --compare-versions "$ES_VERSION" "ge" "7.0.0"; then
@@ -943,24 +950,19 @@ configure_elasticsearch_yaml()
     log "[configure_elasticsearch_yaml] configure master/client/data node type flags only master-$MASTER_ONLY_NODE only data-$DATA_ONLY_NODE"
     if [ ${MASTER_ONLY_NODE} -ne 0 ]; then
         log "[configure_elasticsearch_yaml] configure node as master only"
-        echo "node.master: true" >> $ES_CONF
-        echo "node.data: false" >> $ES_CONF
+        echo "node.roles: [ master ]" >> $ES_CONF
     elif [ ${DATA_ONLY_NODE} -ne 0 ]; then
         log "[configure_elasticsearch_yaml] configure node as data only"
-        echo "node.master: false" >> $ES_CONF
-        echo "node.data: true" >> $ES_CONF
+        echo "node.roles: [ data ]" >> $ES_CONF
     elif [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
         log "[configure_elasticsearch_yaml] configure node as client only"
-        echo "node.master: false" >> $ES_CONF
-        echo "node.data: false" >> $ES_CONF
+        echo "node.roles: [ ]" >> $ES_CONF
     else
         log "[configure_elasticsearch_yaml] configure node as master and data"
-        echo "node.master: true" >> $ES_CONF
-        echo "node.data: true" >> $ES_CONF
+        echo "node.roles: [ master, data ]" >> $ES_CONF
     fi
 
     echo "network.host: [_site_, _local_]" >> $ES_CONF
-    echo "node.max_local_storage_nodes: 1" >> $ES_CONF
 
     configure_awareness_attributes $ES_CONF
 
@@ -987,6 +989,10 @@ configure_elasticsearch_yaml()
     if [[ ${INSTALL_XPACK} -ne 0 || ${BASIC_SECURITY} -ne 0 ]]; then
       log "[configure_elasticsearch_yaml] Set X-Pack Security enabled"
       echo "xpack.security.enabled: true" >> $ES_CONF
+    fi
+    if [[ ${BASIC_SECURITY} -eq 0 ]]; then
+      log "[configure_elasticsearch_yaml] Set X-Pack Security disabled"
+      echo "xpack.security.enabled: false" >> $ES_CONF
     fi
 
     # Additional yaml configuration
