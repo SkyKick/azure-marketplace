@@ -32,6 +32,7 @@ help()
     echo "    -V      base64 encoded PKCS#12 archive (.p12/.pfx) containing the CA key and certificate used to secure Elasticsearch HTTP layer"
     echo "    -J      Password for PKCS#12 archive (.p12/.pfx) containing the CA key and certificate used to secure Elasticsearch HTTP layer"
     echo "    -U      Public domain name (and optional port) for this instance of Kibana to configure SAML Single-Sign-On"
+    echo "    -b      Enable Basic Security"
     echo "    -h      view this help content"
 }
 
@@ -80,7 +81,7 @@ HTTP_CACERT_PASSWORD=""
 SAML_SP_URI=""
 
 #Loop through options passed
-while getopts :n:v:u:S:C:K:P:Y:H:G:V:J:U:lh optname; do
+while getopts :n:v:u:S:C:K:P:Y:H:G:V:J:U:b:lh optname; do
   log "Option $optname set"
   case $optname in
     n) #set cluster name
@@ -125,6 +126,9 @@ while getopts :n:v:u:S:C:K:P:Y:H:G:V:J:U:lh optname; do
     Y) #kibana additional yml configuration
       YAML_CONFIGURATION="${OPTARG}"
       ;;
+    b) Enable Basic Security
+      BASIC_SECURITY=1
+      ;;
     h) #show help
       help
       exit 2
@@ -142,9 +146,9 @@ done
 #########################
 
 # supports security features with a basic license
-if [[ $(dpkg --compare-versions "$KIBANA_VERSION" "ge" "7.1.0"; echo $?) -eq 0 || ($(dpkg --compare-versions "$KIBANA_VERSION" "ge" "6.8.0"; echo $?) -eq 0 && $(dpkg --compare-versions "$KIBANA_VERSION" "lt" "7.0.0"; echo $?) -eq 0) ]]; then
-  BASIC_SECURITY=1
-fi
+# if [[ $(dpkg --compare-versions "$KIBANA_VERSION" "ge" "7.1.0"; echo $?) -eq 0 || ($(dpkg --compare-versions "$KIBANA_VERSION" "ge" "6.8.0"; echo $?) -eq 0 && $(dpkg --compare-versions "$KIBANA_VERSION" "lt" "7.0.0"; echo $?) -eq 0) ]]; then
+#   BASIC_SECURITY=1
+# fi
 
 log "installing Kibana $KIBANA_VERSION for Elasticsearch cluster: $CLUSTER_NAME"
 log "installing X-Pack plugins is set to: $INSTALL_XPACK"
@@ -156,7 +160,7 @@ log "Kibana will talk to Elasticsearch over $ELASTICSEARCH_URL"
 #########################
 
 random_password()
-{ 
+{
   < /dev/urandom tr -dc '!@#$%_A-Z-a-z-0-9' | head -c${1:-64}
   echo
 }
@@ -179,7 +183,7 @@ create_keystore_if_not_exists()
     KEYSTORE_FILE=/etc/kibana/kibana.keystore
   fi
 
-  if [[ -f $KEYSTORE_FILE ]]; then 
+  if [[ -f $KEYSTORE_FILE ]]; then
     log "[create_keystore_if_not_exists] kibana.keystore exists at $KEYSTORE_FILE"
   else
     log "[create_keystore_if_not_exists] create kibana.keystore"
@@ -244,7 +248,7 @@ configure_kibana_yaml()
     else
       echo "elasticsearch.hosts: [\"$ELASTICSEARCH_URL\"]" >> $KIBANA_CONF
     fi
-    
+
     echo "server.host: $(hostname -i)" >> $KIBANA_CONF
     # specify kibana log location
     echo "logging.dest: /var/log/kibana.log" >> $KIBANA_CONF
@@ -262,7 +266,7 @@ configure_kibana_yaml()
       local KIBANA_USER="kibana"
       if dpkg --compare-versions "$KIBANA_VERSION" "ge" "7.8.0"; then
         KIBANA_USER="kibana_system"
-      fi 
+      fi
       echo "elasticsearch.username: $KIBANA_USER" >> $KIBANA_CONF
 
       # store credentials in the keystore
