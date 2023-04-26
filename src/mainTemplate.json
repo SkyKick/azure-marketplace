@@ -1977,7 +1977,7 @@
       "resourceGroup": "[variables('networkResourceGroupMap')[parameters('vNetNewOrExisting')]]",
       "location": "[variables('location')]",
       "addressPrefix": "[parameters('vNetNewAddressPrefix')]",
-      "https": "[if(and(or(greater(length(parameters('esHttpCertBlob')), 0), greater(length(parameters('esHttpCaCertBlob')), 0)), or(equals(parameters('xpackPlugins'), 'Yes'), and(greaterOrEquals(variables('esVersionMajor'), 7), greaterOrEquals(variables('esVersionMinor'), 1)), and(equals(variables('esVersionMajor'), 6), greaterOrEquals(variables('esVersionMinor'), 8)))), 'Yes', 'No')]",
+      "https": "[if(and(or(greater(length(parameters('esHttpCertBlob')), 0), greater(length(parameters('esHttpCaCertBlob')), 0)), equals(parameters('xpackPlugins'), 'Yes')), 'Yes', 'No')]",
       "subnet": {
         "name": "[parameters('vNetClusterSubnetName')]",
         "addressPrefix": "[parameters('vNetNewClusterSubnetAddressPrefix')]",
