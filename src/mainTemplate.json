@@ -218,6 +218,7 @@
       "type": "string",
       "defaultValue": "Standard_A2_v2",
       "allowedValues": [
+        "Standard_A2",
         "Standard_A2_v2",
         "Standard_A4_v2",
         "Standard_A8_v2",
@@ -801,6 +802,7 @@
       "type": "string",
       "defaultValue": "Standard_DS1_v2",
       "allowedValues": [
+        "Standard_A2",
         "Standard_A1_v2",
         "Standard_A2_v2",
         "Standard_A4_v2",
