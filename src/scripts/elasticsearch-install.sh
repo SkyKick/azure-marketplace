@@ -59,7 +59,7 @@ help()
     echo "    -k      set the key for the default storage account for repository-azure plugin"
     echo "    -E      set the storage account suffix for repository-azure plugin"
 
-    echo "    -M      set the API Key for DataDog Agent installation"
+    echo "    -g      set the API Key for DataDog Agent installation"
 
     echo "    -b      Enable Basic Security"
 
@@ -265,7 +265,7 @@ while getopts :n:m:v:A:R:M:K:S:F:Z:p:a:k:L:C:B:E:H:G:T:W:V:J:N:D:O:P:b:xyzldjh o
     E) #azure storage account endpoint suffix
       STORAGE_SUFFIX="${OPTARG}"
       ;;
-    M) #datadog api key
+    g) #datadog api key
       DATADOG_API_KEY="${OPTARG}"
       ;;
     h) #show help
