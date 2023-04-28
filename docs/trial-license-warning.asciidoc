@@ -1,7 +1,7 @@
-:current: 6.5
+:current: 7.11
 :register: https://register.elastic.co
 :elasticdocs: https://www.elastic.co/guide/en/elasticsearch/reference/{current}
-:licenseexpiration: {stackdocs}/license-expiration.html
+:licenseexpiration: {kibana-ref}/managing-licenses.html#license-expiration
 
 [WARNING]
 --
@@ -13,9 +13,6 @@ when running with an expired license. The license can be updated at any point be
 or on expiration, using the {elasticdocs}/update-license.html[Update License API]
 or Kibana UI, if available in the version deployed.
 
-With Elasticsearch 6.3+, you can revert to a free perpetual basic license
+You can revert to a free perpetual basic license
 included with deployment by using the {elasticdocs}/start-basic.html[Start Basic API].
-
-With Elasticsearch 6.2 and prior, you can {register}[register for free basic license] and apply
-it to the cluster.
 --

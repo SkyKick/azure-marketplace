@@ -1,17 +1,18 @@
 :marketplace: https://azuremarketplace.microsoft.com/en-au/marketplace/apps/elastic.elasticsearch
 :portal: https://portal.azure.com
 :github: https://github.com/elastic/azure-marketplace
-:current: 6.5
-:version: 6.5.0
+:current: 7.11
+:version: 7.11.1
 :register: https://register.elastic.co
 :elasticguide: https://www.elastic.co/guide/en/elasticsearch
 :elasticdocs: {elasticguide}/reference/{current}
+:kibana-ref: https://www.elastic.co/guide/en/kibana/{current}
 :elasticstack: https://www.elastic.co/products/stack
-:stackdocs: https://www.elastic.co/guide/en/elastic-stack-overview/{current}
 :xpackenabled: {elasticdocs}/security-settings.html#general-security-settings
-:bootstrappassword: : {stackdocs}/built-in-users.html#bootstrap-elastic-passwords
-:licenseexpiration: {stackdocs}/license-expiration.html
+:bootstrappassword: : {elasticdocs}/built-in-users.html#bootstrap-elastic-passwords
+:licenseexpiration: {kibana-ref}/managing-licenses.html
 :microsoftdocs: https://docs.microsoft.com
+:azuredocs: https://azure.microsoft.com
 :azurecli: {microsoftdocs}/cli/azure/?view=azure-cli-latest
 :azurepowershell: {microsoftdocs}/powershell/azure/overview
 :subscriptions: https://www.elastic.co/subscriptions
@@ -19,7 +20,7 @@
 :resourcegroup: {microsoftdocs}/azure/azure-resource-manager/resource-group-portal
 :incrementalmode: {microsoftdocs}/azure/azure-resource-manager/resource-group-template-deploy#incremental-and-complete-deployments
 :vms: {microsoftdocs}/azure/virtual-machines/linux/sizes
-:azurelocations: https://azure.microsoft.com/en-au/global-infrastructure/locations/
+:azurelocations: {azuredocs}/en-au/global-infrastructure/locations/
 :availabilitysets: {microsoftdocs}/azure/virtual-machines/linux/manage-availability
 :availabilityzones: {microsoftdocs}/azure/availability-zones/az-overview
 :manageddisks: {microsoftdocs}/azure/virtual-machines/linux/managed-disks-overview
@@ -33,9 +34,8 @@
 :yamllint: http://www.yamllint.com/
 :openssl: https://www.openssl.org/docs/man1.0.2/apps/openssl.html
 :base64: https://linux.die.net/man/1/base64
-:acceleratednetworking: https://azure.microsoft.com/en-us/blog/maximize-your-vm-s-performance-with-accelerated-networking-now-generally-available-for-both-windows-and-linux/
-
-
+:acceleratednetworking: {azuredocs}/en-us/blog/maximize-your-vm-s-performance-with-accelerated-networking-now-generally-available-for-both-windows-and-linux/
+:loadbalancers: {microsoftdocs}/azure/load-balancer/load-balancer-standard-overview
 
 [[azure-arm-template]]
 == Azure Resource Manager (ARM) template
@@ -52,7 +52,7 @@ group, or as a full deployment, which will replace all resources within a resour
 group.
 
 [[azure-arm-template-getting-started]]
-=== Getting started
+=== Getting started with the ARM template
 
 The best way to work with Elastic's ARM template is using one of the official Azure
 command line interface (CLI) tools:
@@ -146,16 +146,17 @@ template_version={version}
 az group deployment create \
   --resource-group "<name>" \
   --template-uri $template_base_uri/$template_version/src/mainTemplate.json \
-  --parameters artifactsBaseUrl=$template_base_uri/$template_version/src \
+  --parameters _artifactsLocation=$template_base_uri/$template_version/src/ \
                esVersion={version} esClusterName=elasticsearch \
                vmDataDiskCount=1 dataNodesAreMasterEligible=Yes \
                adminUsername=russ adminPassword=Password1234 \
                securityBootstrapPassword=bootstrapPassword123 \
-               securityAdminPassword=adminPassword123 \
-               securityReadPassword=readPassword123 \
+               securityAdminPassword=adminPassword123 \              
                securityKibanaPassword=kibanaPassword123 \
                securityLogstashPassword=logstashPassword123 \
-               securityBeatsPassword=beatsPassword123
+               securityBeatsPassword=beatsPassword123 \
+               securityApmPassword=apmPassword123 \
+               securityRemoteMonitoringPassword=remoteMonitoringPassword123
 ----
 
 [source,powershell]
@@ -166,7 +167,7 @@ $templateBaseUri = "https://raw.githubusercontent.com/elastic/azure-marketplace"
 $templateVersion = "{version}"
 
 $parameters = @{
-  "artifactsBaseUrl" = "$templateBaseUri/$templateVersion/src"
+  "_artifactsLocation" = "$templateBaseUri/$templateVersion/src/"
   "esVersion" = "{version}"
   "esClusterName" = "elasticsearch"
   "vmDataDiskCount" = 1
@@ -175,10 +176,11 @@ $parameters = @{
   "adminPassword" = "Password1234"
   "securityBootstrapPassword" = "bootstrapPassword123"
   "securityAdminPassword" = "adminPassword123"
-  "securityReadPassword" = "readPassword123"
   "securityKibanaPassword" = "kibanaPassword123"
   "securityLogstashPassword" = "logstashPassword123"
   "securityBeatsPassword" = "beatsPassword123"
+  "securityApmPassword" = "apmPassword123"
+  "securityRemoteMonitoringPassword" = "remoteMonitoringPassword123"
 }
 
 $deployment = New-AzureRmResourceGroupDeployment -ResourceGroupName "<name>" `
@@ -193,9 +195,8 @@ running version {version}
 * Kibana {version}.
 * The cluster has three master-eligible data nodes, each with a single 1024GB attached managed disk.
 * The cluster will have a trial license applied, providing access to Elastic Stack Platinum features for 30 days
-* Security feature is enabled, and the {xpackdocs}/built-in-roles.html[built-in roles] `elastic`, `kibana` and
-`logstash_system` are configured, along with an `es_read` user account with readonly
-access.
+* Security feature is enabled, and the {elasticdocs}/built-in-users.html[built-in users] `elastic`, `kibana[_system]`,
+`logstash_system`, `apm_system` and `remote_monitoring_user` are configured.
 
 The ARM template accepts _many_ {github}#parameters[parameters], many of which are optional. When a value is not supplied for a parameter, a default value defined within the
 ARM template will be used. In the example above, the number of data nodes deployed
@@ -275,12 +276,18 @@ different parameter and deployment options.
 The ARM template has some general parameters that control the operation of the
 template:
 
-`artifactsBaseUrl`::
+`_artifactsLocation`::
 The base public URI which informs the main template from where the other contents
 of the ARM template will be retrieved, such as linked templates and deployment scripts.
-Default is `https://raw.githubusercontent.com/elastic/azure-marketplace/{branch}/src`
+Default is `https://raw.githubusercontent.com/elastic/azure-marketplace/{branch}/src/`
 where `{branch}` is the git branch or tag to target, for
-<<azure-arm-template-repeatable-deployments, repeatable deployments>>
+<<azure-arm-template-repeatable-deployments, repeatable deployments>>. The value must end
+in a trailing `/`.
+
+`_artifactsLocationSasToken`::
+The sasToken required to access `_artifactsLocation`. The default value should be an empty 
+string `""`` for scenarios where the `_artifactsLocation` is not secured, such as the raw GitHub 
+URI for the Azure Marketplace public repo.
 
 `location`::
 The {azurelocations}[Azure location] in which to deploy the resources. Defaults to the same location
@@ -414,7 +421,7 @@ dedicated master nodes will be provisioned.
 The {vms}[Azure VM SKU] to use for data nodes. Different VM SKUs have different CPU, RAM,
 temporary storage space and network bandwidth. Additionally, Different VM SKUs have
 different limits to the number of managed disks that can be attached. The default is
-`Standard_D1`.
+`Standard_DS1_v2`.
 
 `vmDataNodeCount`::
 The number of data nodes. Must be greater than 0. Defaults to 3.
@@ -434,7 +441,7 @@ will be deployed. Dedicated master nodes are **recommended** for larger clusters
 `vmSizeMasterNodes`::
 The {vms}[Azure VM SKU] to use for dedicated master nodes.
 Different VM SKUs have different CPU, RAM, temporary storage space and network
-bandwidth. The default is `Standard_D1`.
+bandwidth. The default is `Standard_DS1_v2`.
 
 `vmMasterNodeAcceleratedNetworking`::
 Whether to enable {acceleratednetworking}[accelerated networking] for dedicated master nodes,
@@ -461,7 +468,7 @@ balancers within the template, instead of data node VMs.
 `vmSizeClientNodes`::
 The {vms}[Azure VM SKU] to use for coordinating nodes.
 Different VM SKUs have different CPU, RAM, temporary storage space and network
-bandwidth. The default is `Standard_D1`.
+bandwidth. The default is `Standard_DS1_v2`.
 
 `vmClientNodeCount`::
 The number of coordinating nodes. Defaults to 0.
@@ -525,14 +532,20 @@ managed disks, and Standard HDD disks for those that do not. The default is `Def
 The size of each attached managed disk. Choose between
 +
 [horizontal]
-`XXLarge`::: 4095 GB
-`XLarge`::: 2048 GB
-`Large`::: 1024 GB
-`Medium`::: 512 GB
-`Small`::: 128 GB
+`32TiB`::: 32 Tebibytes
+`16TiB`::: 16 Tebibytes
+`8TiB`::: 8 Tebibytes
+`4TiB`::: 4 Tebibytes
+`2TiB`::: 2 Tebibytes
+`1TiB`::: 1 Tebibyte
+`512GiB`::: 512 Gibibytes
+`256GiB`::: 256 Gibibytes
+`128GiB`::: 126 Gibibytes
+`64GiB`::: 64 Gibibytes
+`32GiB`::: 32 Gibibytes
 
 +
-Default is `Large`.
+Default is `1TiB`.
 
 `vmDataDiskCount`::
 The number of managed disks to attach to _each_ data node. The total number of
@@ -726,20 +739,43 @@ An OSI layer 4 load balancer configured with a static private IP address on the 
 network, that can be used to round robin requests across Elasticsearch nodes. The
 private IP address is configured with `vNetLoadBalancerIp` parameter.
 
+The following settings apply to the internal load balancer
+
+`loadBalancerInternalSku`::
+Choose between `Basic` and `Standard` load balancer SKUs for the internal load balancer. An
+internal load balancer is **always** deployed, to balance internal traffic to the cluster. When 
+the `Standard` load balancer SKU is selected and `loadBalancerType` is `internal`, a Network 
+Security Group will also be deployed, and each VM in the backend pool will be assigned 
+a `Standard` public IP address, to allow outbound internet traffic from the VMs in the backend 
+pool, which is required to install the Elastic Stack and dependencies.
+{loadbalancers}[Check the Azure documentation on Standard Load Balancers] to determine which
+options is best suited for your needs. Default is `Basic`.
+
 When coordinating nodes are deployed, they are attached to the internal load balancer
-backend pool. When no coordinating nodes are deployed, data nodes are attached to
+backend pool. When no coordinating nodes are deployed, the data nodes are attached to
 the backend pool. The load balancer receives incoming requests on port 9200 and
 round robins them across the backend pool over port 9200,
 with a TCP health probe that checks connectivity every 30 seconds, taking
-nodes out of the backend pool when health probes fail.
+nodes out of the backend pool when health probes fail. An idle timeout of 5 minutes
+is also configured.
 
 When Kibana is deployed, Kibana is configured to communicate with Elasticsearch
 through the internal load balancer.
 
 [[external-load-balancer]]
 ==== External load balancer
-An OSI layer 4 load balancer configured with a dynamically assigned public IP address
+An OSI layer 4 load balancer configured with a public IP address
 that can be used to send requests to Elasticsearch from the public internet.
+
+The following settings are applicable to the external load balancer
+
+`loadBalancerExternalSku`::
+Choose between `Basic` and `Standard` load balancer SKUs for the external load balancer. Only
+relevant when `loadBalancerType` is `external`. When the `Standard` load balancer SKU is selected,
+the public IP address SKU attached to the external load balancer will also be `Standard`, and a
+Network Security Group will also be deployed, to allow inbound internet traffic to the VMs in the backend pool.
+{loadbalancers}[Check the Azure documentation on Standard Load Balancers] to determine which
+options is best suited for your needs. Default is `Basic`.
 
 When choosing to deploy with an external load balancer, both an internal and
 external load balancer are deployed; when Kibana is deployed, it will be
@@ -759,7 +795,8 @@ they are attached to the external load balancer backend pool.
 When no coordinating nodes are deployed, data nodes are attached to
 the backend pool. The load balancer round robins requests across the backend pool
 over port 9200, with a TCP health probe that checks connectivity every 30 seconds, taking
-nodes out of the backend pool when health probes fail.
+nodes out of the backend pool when health probes fail. An idle timeout of 5 minutes
+is also configured.
 
 [[application-gateway]]
 ==== Application Gateway
@@ -856,8 +893,9 @@ $gatewayIp = "https://$($gatewayIpResource.DnsSettings.Fqdn):9200"
 [[azure-arm-template-kibana]]
 === Kibana
 
-Kibana can be deployed in addition to Elasticsearch, providing a visual window and UI into the data within Elasticsearch. The version of Kibana deployed is always the same
-as the version of Elasticsearch, ensuring compatibility between the products.
+Kibana can be deployed in addition to Elasticsearch, providing a visual window and UI into the 
+data within Elasticsearch. The version of Kibana deployed is always the same as the version of 
+Elasticsearch, ensuring compatibility between the products.
 
 The following parameters can be used to deploy Kibana, and control additional configuration
 
@@ -866,12 +904,12 @@ Whether to deploy Kibana in addition to Elasticsearch. A value of `Yes` will als
 
 `vmSizeKibana`::
 The {vms}[Azure VM SKU] to use for Kibana. Different VM SKUs have different CPU, RAM,
-temporary storage space and network bandwidth. The Kibana VM always uses standard storage for the OS disk. The default value is `Standard_A2`.
+temporary storage space and network bandwidth. The Kibana VM always uses standard storage for the OS disk. The default value is `Standard_A2_v2`.
 
 [NOTE]
 --
 The template deploys only a single instance of Kibana. You should ensure that a VM SKU
-of sufficient size is chosen to be service the expected amount of traffic. A larger VM
+of sufficient size is chosen to service the expected amount of traffic. A larger VM
 SKU will generally be faster to optimize browser bundles and start up than a smaller
 VM SKU.
 --
@@ -883,7 +921,8 @@ networking performance. Valid values are `Default`, `Yes`, `No`. The default is 
 enables accelerated networking for the VM SKUs known to support it.
 
 `kibanaAdditionalYaml`::
-Additional configuration that will be applied to the kibana.yml configuration file before start up. Each line must be separated by a `\n` newline character, for example
+Additional configuration that will be applied to the kibana.yml configuration file before start up. 
+Each line must be separated by a `\n` newline character, for example
 +
 [source,text]
 ----
@@ -903,7 +942,7 @@ Kibana communicates with Elasticsearch through the <<internal-load-balancer, int
 [[azure-arm-template-logstash]]
 === Logstash
 
-A single instance of Logstash can be deployed in addition to Elasticsearch, providing a pipeline for ingesting data into Elasticsearch.
+Multiple instances of Logstash can be deployed in addition to Elasticsearch, providing a pipeline for ingesting data into Elasticsearch.
 The version of Logstash deployed is always the same as the version of Elasticsearch, ensuring compatibility between products.
 
 The following parameters can be used to deploy Logstash, and control additional configuration
@@ -913,14 +952,10 @@ Whether to deploy Logstash in addition to Elasticsearch. A value of `Yes` will a
 
 `vmSizeLogstash`::
 The {vms}[Azure VM SKU] to use for Logstash. Different VM SKUs have different CPU, RAM,
-temporary storage space and network bandwidth. The Logstash VM always uses standard storage for the OS disk. The default value is `Standard_D1`.
+temporary storage space and network bandwidth. The Logstash VM always uses standard storage for the OS disk. The default value is `Standard_DS1_v2`.
 
-[NOTE]
---
-The template deploys only a single instance of Logstash. You should ensure that a VM SKU
-of sufficient size is chosen to be able to handle the expected amount of traffic. A larger VM
-SKU will generally be faster and have better bandwidth than a smaller VM SKU.
---
+`vmLogstashCount`::
+The number of Logstash VMs to deploy. Defaults to `1`.
 
 `vmLogstashAcceleratedNetworking`::
 Whether to enable {acceleratednetworking}[accelerated networking] for Logstash,
@@ -952,8 +987,7 @@ using the CA certificate used to secure the Elasticsearch HTTP layer.
 
 Logstash communicates with Elasticsearch through the IP address of the internal load balancer, which means
 that a certificate provided with `esHttpCertBlob` is unlikely to pass hostname
-verification. In Logstash 6.4.0+, `xpack.monitoring.elasticsearch.ssl.verification_mode` is set to `none`.
-For prior versions of Logstash, monitoring is not enabled when a certificate has been provided with `esHttpCertBlob`.
+verification. For this reason, `xpack.monitoring.elasticsearch.ssl.verification_mode` is set to `none`.
 
 When a CA certificate is provided with `esHttpCaCertBlob`, the generated certificates used to
 secure the Elasticsearch HTTP layer include the internal load balancer IP address, meaning
@@ -962,7 +996,7 @@ for the Elasticsearch HTTP layer.
 --
 
 `logstashKeystorePassword`::
-Security password for Logstash keystore, used to store values in Logstash 6.2.0 onwards.
+Security password for Logstash keystore.
 +
 If no value is supplied, a password will be generated using the
 ARM template `uniqueString()` function.
@@ -996,7 +1030,7 @@ without the appropriate role required for authorization. In addition, securing
 the transport of data and communication between Elasticsearch, Kibana, the browser,
 or any other client by encrypting traffic is critical for data integrity.
 
-The ARM template exposes a number of features for securing a deployment to Azure.
+The ARM template exposes a number of features for securing a deployment in Azure.
 
 [[authentication-and-authorization]]
 ==== Authentication and Authorization
@@ -1011,12 +1045,13 @@ cluster.
 
 include::trial-license-warning.asciidoc[]
 
+include::basic-security.asciidoc[]
+
 The following parameters are used to configure initial user accounts
 
 `securityBootstrapPassword`::
 Security password for {bootstrappassword}[`bootstrap.password` key] added to the Elasticsearch keystore.
-The bootstrap password is used to seed the built-in users and is necessary only for
-Elasticsearch 6.0 onwards.
+The bootstrap password is used to seed the built-in users.
 +
 If no value is supplied, a 13 character password will be generated using the
 ARM template `uniqueString()` function.
@@ -1031,8 +1066,8 @@ Keep this password somewhere safe; You never know when you may need it!
 --
 
 `securityKibanaPassword`::
-Security password for the `kibana` built-in user account. This is the account that
-Kibana uses to communicate with Elasticsearch. Must be greater
+Security password for the `kibana` (`kibana_system` in 7.8.0+) built-in user account. 
+This is the account that Kibana uses to communicate with Elasticsearch. Must be greater
 than six characters in length.
 
 `securityLogstashPassword`::
@@ -1043,30 +1078,21 @@ than six characters in length.
 `securityBeatsPassword`::
 Security password for the `beats_system` built-in user account. This is the account that
 Beats can use to communicate with Elasticsearch. Must be greater
-than six characters in length. Valid only for Elasticsearch 6.3.0+
+than six characters in length.
 
-`securityReadPassword`::
-Security password for an `es_read` user account configured with a user (read-only) role with
-the following definition
-+
-[source,json]
---
-{
-  "cluster": [ "monitor" ],
-  "indices": [
-    {
-      "names": [ "*" ],
-      "privileges": [ "read", "monitor", "view_index_metadata" ]
-    }
-  ]
-}
---
-+
-Must be greater than six characters in length.
+`securityApmPassword`::
+Security password for the `apm_system` built-in user account. This is the account that the 
+APM server can use to communicate with Elasticsearch. Must be greater
+than six characters in length.
+
+`securityRemoteMonitoringPassword`::
+Security password for the `remote_monitoring_user` built-in user account. This is the account that 
+Metricbeat uses when collecting and storing monitoring information in Elasticsearch. 
+It has the `remote_monitoring_agent` and `remote_monitoring_collector` built-in roles.
 
 It is recommended after deployment to use the `elastic` superuser account to create
-the individual user accounts that will be needed for the users and applications
-that will interact with Elasticsearch and Kibana, then use those accounts going
+additional individual user accounts that will be needed for users and applications
+to interact with Elasticsearch and Kibana, and use these accounts going
 forward.
 
 [[saml-single-sign-on]]
@@ -1079,7 +1105,6 @@ response to successful authentication to determine identity and privileges.
 
 To integrate SAML SSO, the following conditions must be satisfied:
 
-* `esVersion` **must** be one that supports the SAML realm i.e. Elasticsearch 6.2.0 or later
 * `xpackPlugins` **must** be `Yes` to install a trial license of Elastic Stack platinum features
 * `kibana` **must** be `Yes` to deploy an instance of Kibana
 * `esHttpCertBlob` _or_ `esHttpCaCertBlob` **must** be provided to configure SSL/TLS for the HTTP layer of Elasticsearch.
@@ -1135,19 +1160,8 @@ upon successful authentication
 
 image:images/saml_token_attributes.png[]
 
-Add the `role` attribute to the User attributes using the Add Attribute section
-
-image:images/saml_token_add_attribute.png[]
-
-with the following details
-
-[horizontal]
-Name:: `role`
-Mapping:: `user.assignedroles`
-Namespace:: `http://schemas.microsoft.com/ws/2008/06/identity/claims`
-
-Now, the role(s) assigned to a user within the Enterprise application will be
-sent in the SAML token, in the SAML `role` claim.
+You can add here any additional attributes that you wish to be included as
+claims in the SAML token returned after successful authentication.
 
 [[application-manifest]]
 ===== Application manifest
@@ -1221,10 +1235,11 @@ Elasticsearch, for example, the `superuser` role, etc. Each role needs a unique 
 After adding the necessary roles, save the manifest.
 
 [[assign-users-to-enterprise-application]]
-===== Assign users to Enterprise application
+===== Assign users and groups to Enterprise application
 
-Now that the Enterprise application roles are configured, users within AAD can be granted
-access to the Enterprise application and be assigned one of the application roles
+Now that the Enterprise application roles are configured, users and groups within
+AAD can be granted access to the Enterprise application and be assigned one of
+the application roles
 
 image:images/add_user_to_role.png[]
 
@@ -1251,7 +1266,7 @@ An example of a minimum deployment is
 .Azure CLI 2.0
 ----
 template_version={version}
-template_base_uri="https://raw.githubusercontent.com/elastic/azure-marketplace/$template_version/src"
+template_base_uri="https://raw.githubusercontent.com/elastic/azure-marketplace/$template_version/src/"
 
 # certificates for SSL/TLS
 http_cert=$(base64 /mnt/c/http.p12)
@@ -1269,7 +1284,7 @@ az group create --name $resource_group --location $location
 az group deployment create \
     --resource-group $resource_group \
     --template-uri $template_base_uri/mainTemplate.json \
-    --parameters artifactsBaseUrl=$template_base_uri \
+    --parameters _artifactsLocation=$template_base_uri \
         esClusterName=elasticsearch \
         esHttpCertBlob=$http_cert \
         adminUsername=russ \
@@ -1277,10 +1292,11 @@ az group deployment create \
         adminPassword=Password1234 \
         securityBootstrapPassword=BootstrapPassword123 \
         securityAdminPassword=AdminPassword123 \
-        securityReadPassword=ReadPassword123 \
         securityKibanaPassword=KibanaPassword123 \
         securityLogstashPassword=LogstashPassword123 \
         securityBeatsPassword=BeatsPassword123 \
+        securityApmPassword=ApmPassword123 \
+        securityRemoteMonitoringPassword=RemoteMonitoringPassword123 \
         kibanaCertBlob=$kibana_cert \
         kibanaKeyBlob=$kibana_key \
         samlMetadataUri=$metadata_uri
@@ -1291,7 +1307,7 @@ az group deployment create \
 .Azure PowerShell
 ----
 $templateVersion = "{version}"
-$templateBaseUri = "https://raw.githubusercontent.com/elastic/azure-marketplace/$templateVersion/src"
+$templateBaseUri = "https://raw.githubusercontent.com/elastic/azure-marketplace/$templateVersion/src/"
 
 # certificates for SSL/TLS
 $httpCert = [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\http-cert.pfx"))
@@ -1305,7 +1321,7 @@ $location = "<location>"
 $metadataUri="https://login.microsoftonline.com/<guid>/federationmetadata/2007-06/federationmetadata.xml?appid=<guid>"
 
 $parameters = @{
-    "artifactsBaseUrl"= $templateBaseUri
+    "_artifactsLocation"= $templateBaseUri
     "esClusterName" = "elasticsearch"
     "esHttpCertBlob" = $httpCert
     "adminUsername" = "russ"
@@ -1313,10 +1329,11 @@ $parameters = @{
     "adminPassword" = "Password1234"
     "securityBootstrapPassword" = "BootstrapPassword123"
     "securityAdminPassword" = "AdminPassword123"
-    "securityReadPassword" = "ReadPassword123"
     "securityKibanaPassword" = "KibanaPassword123"
     "securityLogstashPassword" = "LogstashPassword123"
     "securityBeatsPassword" = "BeatsPassword123"
+    "securityApmPassword" = "ApmPassword123"
+    "securityRemoteMonitoringPassword" = "RemoteMonitoringPassword123"
     "kibanaCertBlob" = $kibanaCert
     "kibanaKeyBlob" = $kibanaKey
     "samlMetadataUri" = $metadataUri
@@ -1336,14 +1353,14 @@ Identifier (EntityID) field for the Enterprise application within AAD>>. Also pa
 [[role-mappings]]
 ==== Role mappings
 
-With the cluster deployed, the {elasticdocs}/security-api-role-mapping.html[Role Mapping APIs] are used to configure rules to define how roles received in the SAML token map to roles within Elasticsearch. A SAML realm called `saml_aad` is configured when `samlMetadataUri` parameter is provided, and maps the SAML role claim to the `groups` attribute.
+With the cluster deployed, the {elasticdocs}/security-api-put-role-mapping.html[Role Mapping APIs] are used to configure rules to define how roles received in the SAML token map to roles within Elasticsearch. A SAML realm called `saml_aad` is configured when `samlMetadataUri` parameter is provided, and maps the SAML role claim to the `groups` attribute.
 
 Since SAML SSO integration also configures Basic Authentication access, role mappings
 can be added using the `elastic` superuser account. The role mappings that you define will vary depending on the roles that you defined in the `appRoles` array in the  <<application-manifest, Enterprise Application Manifest>>, but as two examples to demonstrate
 
 [source,sh]
 ----
-PUT /_xpack/security/role_mapping/saml-kibana-user
+PUT /_security/role_mapping/saml-kibana-user
 {
   "roles": [ "kibana_user" ],
   "enabled": true,
@@ -1360,7 +1377,7 @@ realm, and
 
 [source,sh]
 ----
-PUT /_xpack/security/role_mapping/saml-superuser
+PUT /_security/role_mapping/saml-superuser
 {
   "roles": [ "superuser" ],
   "enabled": true,
@@ -1390,7 +1407,7 @@ typically want to do this when also deploying an external loadbalancer or Applic
 do this when deploying only Kibana, to secure internal traffic
 between Kibana and Elasticsearch through the internal load balancer.
 
-Configuring TLS for the HTTP layer requires xPackPlugins be set to `Yes`, and the following parameters can be used
+The following parameters can be used
 
 `esHttpCertBlob`::
 A base 64 encoded string of the PKCS#12 archive containing the certificate and key with which to secure the HTTP layer. This certificate will be used by all nodes within the cluster.
@@ -1445,7 +1462,7 @@ The certificate to secure the HTTP layer *must* include a Subject Alternative Na
 ==== Transport layer
 
 You can secure communication between nodes in the cluster with TLS on the Transport layer of Elasticsearch.
-Configuring TLS for the Transport layer requires `xPackPlugins` be set to `Yes`.
+
 The following parameters can be used
 
 `esTransportCaCertBlob`::
@@ -1454,9 +1471,12 @@ certificate and private key, used to generate a unique certificate for each node
 the cluster. Each generated certificate contains a Subject Alternative Name DNS entry with
 the hostname and an ipAddress entry with the private IP address.
 
-`esTransportCertPassword`::
+`esTransportCaCertPassword`::
 Optional passphrase for the PKCS#12 archive encoded in `esTransportCaCertBlob`. Defaults
 to empty string as the archive may not be protected.
+
+`esTransportCertPassword`::
+Optional passphrase for each PKCS#12 archive generated by the CA certificate supplied in `esTransportCaCertBlob`.
 
 One way to generate a PKCS#12 archive containing a CA certificate and key is using
 {elasticdocs}/certutil.html[Elastic's certutil command utility].
@@ -1516,20 +1536,15 @@ can be downloaded from a public URI at deployment time.
 [float]
 === Elastic Stack features (formerly X-Pack)
 
-A trial license for the Platinum features of the Elastic Stack can be deployed for
-Elasticsearch, and Kibana if also deployed, using the following parameter
+A trial license for the {subscriptions}[platinum features] of the Elastic Stack can be deployed for
+Elasticsearch, and Kibana and Logstash if also deployed, using the following parameter
 
 `xPackPlugins`::
-Select `Yes` to install a trial license of the platinum features. A trial license
-provides access to platinum features for 30 days. a value of `No`
-+
-. for Elasticsearch and Kibana 6.3.0+ will deploy with a free perpetual license
-providing access to the basic features. These versions use a distribution with
-Elastic Stack features included in the installation, and the license applied determines which
-features are activated.
-. for Elasticsearch and Kibana prior to 6.3.0, the X-Pack plugin will not be
-installed when a value of `No` is passed. These versions require the X-Pack plugin to
-be installed to be able to apply a license and access features related to that license.
+Select `Yes` to install a trial license of the Elastic Stack platinum features. A trial license
+provides access to {subscriptions}[platinum features] for 30 days. a value of `No`
+deploys a free perpetual basic license, providing access to the {subscriptions}[basic features]. 
+These versions use a distribution with Elastic Stack features included in the installation, 
+and the license applied determines which features are activated.
 +
 The default is `Yes`.
 

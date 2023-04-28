@@ -1,12 +1,19 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "templateBaseUrl": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "The base url for templates"
+        "description": "The base URI where artifacts required by this template are located including a trailing '/'"
       }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+      },
+      "defaultValue": ""
     },
     "osSettings": {
       "type": "object",
@@ -47,13 +54,13 @@
       "No": "empty/empty-jumpbox-resources.json",
       "Yes": "machines/jumpbox-resources.json"
     },
-    "jumpboxTemplateUrl": "[concat(parameters('templateBaseUrl'), variables('jumpboxTemplates')[parameters('topologySettings').jumpbox])]",
+    "jumpboxTemplateUrl": "[uri(parameters('_artifactsLocation'), concat(variables('jumpboxTemplates')[parameters('topologySettings').jumpbox], parameters('_artifactsLocationSasToken')))]",
     "kibanaTemplates": {
       "No": "empty/empty-kibana-resources.json",
       "Yes": "machines/kibana-resources.json"
     },
-    "kibanaTemplateUrl": "[concat(parameters('templateBaseUrl'), variables('kibanaTemplates')[parameters('topologySettings').kibana])]",
-    "dataTemplateUrl": "[concat(parameters('templateBaseUrl'), 'machines/data-nodes-resources.json')]",
+    "kibanaTemplateUrl": "[uri(parameters('_artifactsLocation'), concat(variables('kibanaTemplates')[parameters('topologySettings').kibana], parameters('_artifactsLocationSasToken')))]",
+    "dataTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('machines/data-nodes-resources.json', parameters('_artifactsLocationSasToken')))]",
     "locations": {
       "eastus": {
         "platformFaultDomainCount": 3
@@ -71,6 +78,9 @@
         "platformFaultDomainCount": 3
       },
       "westus": {
+        "platformFaultDomainCount": 3
+      },
+      "canadacentral": {
         "platformFaultDomainCount": 3
       },
       "northeurope": {
@@ -151,24 +161,52 @@
       "Standard_M64m",
       "Standard_M128",
       "Standard_M128m"
-    ]
+    ],
+    "vmNsgName": "[concat(parameters('commonVmSettings').namespacePrefix, 'standard-lb-nsg')]",
+    "vmNsgProperties": [
+      {},
+      {
+        "securityRules": [
+          {
+            "name": "External",
+            "properties": {
+              "description": "Allows inbound traffic from Standard External LB",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9201",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    ],
+    "standardInternalLoadBalancer": "[equals(parameters('networkSettings').internalSku, 'Standard')]",
+    "standardExternalLoadBalancer": "[equals(parameters('networkSettings').externalSku, 'Standard')]",
+    "standardInternalOrExternalLoadBalancer": "[or(variables('standardInternalLoadBalancer'), variables('standardExternalLoadBalancer'))]"
   },
   "resources": [
     {
       "condition": "[equals(parameters('topologySettings').dataNodesAreMasterEligible, 'No')]",
       "name": "master-nodes",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-05-01",
       "dependsOn": [],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('templateBaseUrl'), 'machines/master-nodes-resources.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('machines/master-nodes-resources.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "templateBaseUrl": {
-            "value": "[parameters('templateBaseUrl')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "vm": {
             "value": {
@@ -178,11 +216,12 @@
               "size": "[parameters('topologySettings').vmSizeMasterNodes]",
               "storageAccountType": "Standard_LRS",
               "count": 3,
-              "useBackendPools": "No",
               "backendPools": [],
               "imageReference": "[parameters('osSettings').imageReference]",
               "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
-              "acceleratedNetworking": "[if(equals(parameters('topologySettings').vmMasterNodeAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeMasterNodes), 'Yes', 'No'), parameters('topologySettings').vmMasterNodeAcceleratedNetworking)]"
+              "acceleratedNetworking": "[if(equals(parameters('topologySettings').vmMasterNodeAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeMasterNodes), 'Yes', 'No'), parameters('topologySettings').vmMasterNodeAcceleratedNetworking)]",
+              "nsg": "",
+              "standardInternalLoadBalancer": false
             }
           },
           "elasticTags": {
@@ -192,20 +231,36 @@
       }
     },
     {
+      "condition": "[variables('standardInternalOrExternalLoadBalancer')]",
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('vmNsgName')]",
+      "location": "[parameters('commonVmSettings').location]",
+      "tags": {
+        "provider": "[toUpper(parameters('elasticTags').provider)]"
+      },
+      "properties": "[variables('vmNsgProperties')[if(variables('standardExternalLoadBalancer'), 1, 0)]]"
+    },
+    {
       "condition": "[greater(parameters('topologySettings').vmClientNodeCount, 0)]",
       "name": "client-nodes",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
-      "dependsOn": [],
+      "apiVersion": "2019-05-01",
+      "dependsOn": [
+        "[variables('vmNsgName')]"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('templateBaseUrl'), 'machines/client-nodes-resources.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('machines/client-nodes-resources.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "templateBaseUrl": {
-            "value": "[parameters('templateBaseUrl')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "vm": {
             "value": {
@@ -215,11 +270,12 @@
               "size": "[parameters('topologySettings').vmSizeClientNodes]",
               "count": "[parameters('topologySettings').vmClientNodeCount]",
               "storageAccountType": "Standard_LRS",
-              "useBackendPools": "Yes",
               "backendPools": "[parameters('topologySettings').loadBalancerBackEndPools]",
               "imageReference": "[parameters('osSettings').imageReference]",
               "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
-              "acceleratedNetworking": "[if(equals(parameters('topologySettings').vmClientNodeAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeClientNodes), 'Yes', 'No'), parameters('topologySettings').vmClientNodeAcceleratedNetworking)]"
+              "acceleratedNetworking": "[if(equals(parameters('topologySettings').vmClientNodeAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeClientNodes), 'Yes', 'No'), parameters('topologySettings').vmClientNodeAcceleratedNetworking)]",
+              "nsg": "[if(variables('standardInternalOrExternalLoadBalancer'), variables('vmNsgName'), '')]",
+              "standardInternalLoadBalancer": "[variables('standardInternalLoadBalancer')]"
             }
           },
           "elasticTags": {
@@ -231,8 +287,10 @@
     {
       "name": "data-nodes",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
-      "dependsOn": [],
+      "apiVersion": "2019-05-01",
+      "dependsOn": [
+        "[variables('vmNsgName')]"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -240,8 +298,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "templateBaseUrl": {
-            "value": "[parameters('templateBaseUrl')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "vm": {
             "value": {
@@ -251,11 +312,12 @@
               "size": "[parameters('topologySettings').vmSizeDataNodes]",
               "storageAccountType": "[parameters('topologySettings').vmDataNodeStorageAccountType]",
               "count": "[parameters('topologySettings').vmDataNodeCount]",
-              "useBackendPools": "Yes",
               "backendPools": "[parameters('topologySettings').dataLoadBalancerBackEndPools]",
               "imageReference": "[parameters('osSettings').imageReference]",
               "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
-              "acceleratedNetworking": "[if(equals(parameters('topologySettings').vmDataNodeAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeDataNodes), 'Yes', 'No'), parameters('topologySettings').vmDataNodeAcceleratedNetworking)]"
+              "acceleratedNetworking": "[if(equals(parameters('topologySettings').vmDataNodeAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeDataNodes), 'Yes', 'No'), parameters('topologySettings').vmDataNodeAcceleratedNetworking)]",
+              "nsg": "[if(and(variables('standardInternalOrExternalLoadBalancer'), equals(parameters('topologySettings').vmClientNodeCount, 0)), variables('vmNsgName'), '')]",
+              "standardInternalLoadBalancer": "[variables('standardInternalLoadBalancer')]"
             }
           },
           "storageSettings": {
@@ -270,7 +332,7 @@
     {
       "name": "jumpbox",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-05-01",
       "dependsOn": [],
       "properties": {
         "mode": "Incremental",
@@ -279,9 +341,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "templateBaseUrl": {
-            "value": "[parameters('templateBaseUrl')]"
-          },
           "credentials": {
             "value": "[parameters('commonVmSettings').credentials]"
           },
@@ -309,7 +368,7 @@
     {
       "name": "kibana",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-05-01",
       "dependsOn": [],
       "properties": {
         "mode": "Incremental",
@@ -318,9 +377,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "templateBaseUrl": {
-            "value": "[parameters('templateBaseUrl')]"
-          },
           "credentials": {
             "value": "[parameters('commonVmSettings').credentials]"
           },
@@ -352,38 +408,36 @@
       "condition": "[equals(parameters('topologySettings').logstash, 'Yes')]",
       "name": "logstash",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "apiVersion": "2019-05-01",
       "dependsOn": [],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('templateBaseUrl'), 'machines/logstash-resources.json')]",
+          "uri": "[uri(parameters('_artifactsLocation'), concat('machines/logstash-resources.json', parameters('_artifactsLocationSasToken')))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "templateBaseUrl": {
-            "value": "[parameters('templateBaseUrl')]"
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
           },
-          "credentials": {
-            "value": "[parameters('commonVmSettings').credentials]"
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           },
-          "location": {
-            "value": "[parameters('commonVmSettings').location]"
-          },
-          "namespace": {
-            "value": "[concat(parameters('commonVmSettings').namespacePrefix, 'logstash')]"
-          },
-          "networkSettings": {
-            "value": "[parameters('networkSettings')]"
-          },
-          "osSettings": {
-            "value": "[parameters('osSettings')]"
-          },
-          "vmSize": {
-            "value": "[parameters('topologySettings').vmSizeLogstash]"
-          },
-          "acceleratedNetworking": {
-            "value": "[if(equals(parameters('topologySettings').vmLogstashAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeLogstash), 'Yes', 'No'), parameters('topologySettings').vmLogstashAcceleratedNetworking)]"
+          "vm": {
+            "value": {
+              "shared": "[parameters('commonVmSettings')]",
+              "namespace": "[concat(parameters('commonVmSettings').namespacePrefix, 'logstash-')]",
+              "installScript": "[parameters('osSettings').extensionSettings.logstash]",
+              "size": "[parameters('topologySettings').vmSizeLogstash]",
+              "storageAccountType": "Standard_LRS",
+              "count": "[parameters('topologySettings').vmLogstashCount]",
+              "backendPools": [],
+              "imageReference": "[parameters('osSettings').imageReference]",
+              "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
+              "acceleratedNetworking": "[if(equals(parameters('topologySettings').vmLogstashAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeLogstash), 'Yes', 'No'), parameters('topologySettings').vmLogstashAcceleratedNetworking)]",
+              "nsg": "",
+              "standardInternalLoadBalancer": false
+            }
           },
           "elasticTags": {
             "value": "[parameters('elasticTags')]"
