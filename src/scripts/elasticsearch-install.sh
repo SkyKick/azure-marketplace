@@ -1038,6 +1038,11 @@ configure_elasticsearch_yaml()
     log "[configure_elasticsearch_yaml] setting bootstrap.memory_lock: true"
     echo "bootstrap.memory_lock: true" >> $ES_CONF
 
+    log "[configure_elasticsearch_yaml] Setup local cluster monitoring"
+    echo "xpack.monitoring.exporters.my_local:" >> $ES_CONF
+    echo "  type: local" >> $ES_CONF
+    echo "  use_ingest: false" >> $ES_CONF
+
     local INSTALL_CERTS=0
     if [[ ${INSTALL_XPACK} -ne 0 || ${BASIC_SECURITY} -ne 0 ]]; then
       INSTALL_CERTS=1
