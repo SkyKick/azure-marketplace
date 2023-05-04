@@ -59,40 +59,16 @@
             "constraints": {
               "allowedValues": [
                 {
-                  "label": "v6.8.14",
-                  "value": "6.8.14"
+                  "label": "v6.8.23",
+                  "value": "6.8.23"
                 },
                 {
-                  "label": "v7.4.2",
-                  "value": "7.4.2"
+                  "label": "v7.17.9",
+                  "value": "7.17.9"
                 },
                 {
-                  "label": "v7.5.2",
-                  "value": "7.5.2"
-                },
-                {
-                  "label": "v7.6.2",
-                  "value": "7.6.2"
-                },
-                {
-                  "label": "v7.7.1",
-                  "value": "7.7.1"
-                },
-                {
-                  "label": "v7.8.1",
-                  "value": "7.8.1"
-                },
-                {
-                  "label": "v7.9.3",
-                  "value": "7.9.3"
-                },
-                {
-                  "label": "v7.10.2",
-                  "value": "7.10.2"
-                },
-                {
-                  "label": "v7.11.1",
-                  "value": "7.11.1"
+                  "label": "v8.7.1",
+                  "value": "8.7.1"
                 }
               ]
             }
