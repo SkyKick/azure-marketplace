@@ -250,14 +250,22 @@ configure_kibana_yaml()
     fi
 
     echo "server.host: $(hostname -i)" >> $KIBANA_CONF
-    # specify kibana log location
-    echo "logging.dest: /var/log/kibana.log" >> $KIBANA_CONF
-    touch /var/log/kibana.log
-    chown kibana: /var/log/kibana.log
 
-    # set logging to quiet by default. Note that kibana does not have
-    # a log file rotation policy, so the log file should be monitored
-    echo "logging.quiet: true" >> $KIBANA_CONF
+    # specify kibana log location
+    # set logging to errors only by default
+    echo "logging:" >> $KIBANA_CONF
+    echo "    appenders:" >> $KIBANA_CONF
+    echo "      file:" >> $KIBANA_CONF
+    echo "        type: file" >> $KIBANA_CONF
+    echo "        fileName: /var/log/kibana/kibana.log" >> $KIBANA_CONF
+    echo "        layout:" >> $KIBANA_CONF
+    echo "          type: json" >> $KIBANA_CONF
+    echo "    root:" >> $KIBANA_CONF
+    echo "      appenders: [default, file]" >> $KIBANA_CONF
+    echo "      level: error" >> $KIBANA_CONF
+
+    # Adopt new reporting privelages behavior by setting
+    echo "xpack.reporting.roles.enabled: false" >> $KIBANA_CONF
 
     # configure security
     local ENCRYPTION_KEY
