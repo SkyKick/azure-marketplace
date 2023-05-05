@@ -989,10 +989,12 @@ configure_elasticsearch_yaml()
     if [[ ${INSTALL_XPACK} -ne 0 || ${BASIC_SECURITY} -ne 0 ]]; then
       log "[configure_elasticsearch_yaml] Set X-Pack Security enabled"
       echo "xpack.security.enabled: true" >> $ES_CONF
+      echo "xpack.security.transport.ssl.enabled: true" >> $ES_CONF
     fi
     if [[ ${BASIC_SECURITY} -eq 0 ]]; then
       log "[configure_elasticsearch_yaml] Set X-Pack Security disabled"
       echo "xpack.security.enabled: false" >> $ES_CONF
+      echo "xpack.security.transport.ssl.enabled: false" >> $ES_CONF
     fi
 
     # Additional yaml configuration
