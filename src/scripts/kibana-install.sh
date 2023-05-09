@@ -254,15 +254,14 @@ configure_kibana_yaml()
     # specify kibana log location
     # set logging to errors only by default
     echo "logging:" >> $KIBANA_CONF
-    echo "    appenders:" >> $KIBANA_CONF
-    echo "      file:" >> $KIBANA_CONF
-    echo "        type: file" >> $KIBANA_CONF
-    echo "        fileName: /var/log/kibana/kibana.log" >> $KIBANA_CONF
-    echo "        layout:" >> $KIBANA_CONF
-    echo "          type: json" >> $KIBANA_CONF
-    echo "    root:" >> $KIBANA_CONF
-    echo "      appenders: [default, file]" >> $KIBANA_CONF
-    echo "      level: error" >> $KIBANA_CONF
+    echo "  appenders:" >> $KIBANA_CONF
+    echo "    file:" >> $KIBANA_CONF
+    echo "      type: file" >> $KIBANA_CONF
+    echo "      fileName: /var/log/kibana.log" >> $KIBANA_CONF
+    echo "      layout:" >> $KIBANA_CONF
+    echo "        type: pattern" >> $KIBANA_CONF
+    echo "  root:" >> $KIBANA_CONF
+    echo "    appenders: [file]" >> $KIBANA_CONF
 
     # Adopt new reporting privelages behavior by setting
     echo "xpack.reporting.roles.enabled: false" >> $KIBANA_CONF
