@@ -943,6 +943,7 @@ configure_elasticsearch_yaml()
     else
       log "[configure_elasticsearch_yaml] update configuration with discovery.seed_hosts and cluster.initial_master_nodes set to $UNICAST_HOSTS"
       echo "discovery.seed_hosts: $UNICAST_HOSTS" >> $ES_CONF
+      echo "cluster.initial_master_nodes: $UNICAST_HOSTS" >> $ES_CONF
     fi
 
     # Configure Elasticsearch node type
@@ -1222,6 +1223,7 @@ if systemctl -q is-active elasticsearch.service; then
   log "[elasticsearch] elasticsearch service is already active"
 
   configure_elasticsearch_yaml
+
   # if this is a data node using temp disk, check existence and permissions
   check_data_disk
 
