@@ -61,8 +61,8 @@ fi
 #########################
 # Constants
 #########################
-
-ELASTIC_CONFIG_FILE=/etc/datadog-agent/conf.d/elastic.d/elastic.yaml
+DD_CONFIG_FILE=/etc/datadog-agent/datadog.yaml
+ELASTIC_CONFIG_FILE=/etc/datadog-agent/conf.d/elastic.d/conf.yaml
 DD_AGENT=/var/tmp/install_datadog_agent.sh
 
 #########################
@@ -76,13 +76,23 @@ chmod +x $DD_AGENT
 DD_API_KEY=$API_KEY DD_AGENT_MAJOR_VERSION=7 $DD_AGENT
 rm /etc/datadog-agent/conf.d/elastic.d/auto_conf.yaml
 
-echo "instances:
-    - url: 'http://$(hostname):9200'
-pshard_stats: true
-cluster_stats: false
-pending_task_stats: true
-tags:
-    - 'elasticsearch-role:$NODE_ROLE-node'" >> $ELASTIC_CONFIG_FILE
+echo "logs_enabled: true" >> $DD_CONFIG_FILE
+
+echo "
+init_config:
+
+instances:
+  - url: 'http://$(hostname):9200'
+    pshard_stats: true
+    index_stats: true
+    cluster_stats: false
+    pending_task_stats: true
+    tags:
+      - 'elasticsearch-role:$NODE_ROLE-node'
+logs:
+  - type: file
+    path: /var/log/elasticsearch/*.log
+    source: elasticsearch" >> $ELASTIC_CONFIG_FILE
 
 systemctl restart datadog-agent
 
