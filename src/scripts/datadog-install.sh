@@ -82,7 +82,7 @@ echo "
 init_config:
 
 instances:
-  - url: 'http://$(hostname):9200'
+  - url: 'http://localhost:9200'
     pshard_stats: true
     index_stats: true
     cluster_stats: false
