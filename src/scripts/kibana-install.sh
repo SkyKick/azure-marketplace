@@ -257,7 +257,7 @@ configure_kibana_yaml()
     echo "  appenders:" >> $KIBANA_CONF
     echo "    file:" >> $KIBANA_CONF
     echo "      type: file" >> $KIBANA_CONF
-    echo "      fileName: /var/log/kibana.log" >> $KIBANA_CONF
+    echo "      fileName: /var/log/kibana/kibana.log" >> $KIBANA_CONF
     echo "      layout:" >> $KIBANA_CONF
     echo "        type: pattern" >> $KIBANA_CONF
     echo "  root:" >> $KIBANA_CONF
