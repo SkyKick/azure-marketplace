@@ -124,7 +124,7 @@ scan_for_new_disks() {
 
     # Looks for unpartitioned disks, including NVMe disks.
     declare -a RET
-    DEVS=($(fdisk -l -o Device | egrep -o "Disk /dev/.*?:" | egrep -o "/dev/.*?[^:]"))
+    DEVS=($(fdisk -l -o Device | egrep -o "Disk /dev/nvm.*?:" | egrep -o "/dev/nvm.*?[^:]"))
     for DEV in "${DEVS[@]}";
     do
         # The disk will be considered a candidate for partitioning
@@ -297,7 +297,7 @@ create_striped_volume()
 		# If there is only one attached disk, then the device to mount should be the partition, since we only created the one partition for the entire disk.
 		log "Only one disk found. Using the partition (${PARTITIONS[0]}) as the device."
 		MDDEVICE="${PARTITIONS[0]}"
-	
+
         log "only one disk (${DISKS[0]}) attached. mount it"
         mkfs.ext4 -b 4096 -E stride=${STRIDE},nodiscard "${MDDEVICE}"
 
