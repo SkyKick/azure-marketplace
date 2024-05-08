@@ -184,6 +184,15 @@ write_site_config()
 # Execution
 #########################
 
+log "[apt-get] updating apt-get"
+(apt-get -y update || (sleep 15; apt-get -y update))
+EXIT_CODE=$?
+if [[ $EXIT_CODE -ne 0 ]]; then
+  log "[apt-get] failed updating apt-get. exit code: $EXIT_CODE"
+  exit $EXIT_CODE
+fi
+log "[apt-get] updated apt-get"
+
 log "Install NGINX"
 install_nginx
 
