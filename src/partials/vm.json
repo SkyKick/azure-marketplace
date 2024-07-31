@@ -156,9 +156,6 @@
         "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('namespace'), parameters('index'), '-nic'))]"
       ],
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
-        },
         "hardwareProfile": {
           "vmSize": "[parameters('vm').size]"
         },
