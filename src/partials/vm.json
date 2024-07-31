@@ -14,13 +14,7 @@
         "description": "the outer loop index"
       }
     },
-    "availabilitySet": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the availability set"
-      }
-    },
-    "dataDisks": {
+     "dataDisks": {
       "type": "object",
       "defaultValue": {
         "disks": []
