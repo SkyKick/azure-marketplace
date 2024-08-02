@@ -653,6 +653,7 @@
         "Standard_E2_v3",
         "Standard_E4_v3",
         "Standard_E8_v3",
+        "Standard_E8bs_v5",
         "Standard_E16_v3",
         "Standard_E32_v3",
         "Standard_E64_v3",
@@ -1644,6 +1645,10 @@
         "storageAccountType": "Premium_LRS"
       },
       "Standard_E8as_v4": {
+        "dataDisks": 16,
+        "storageAccountType": "Premium_LRS"
+      },
+      "Standard_E8bs_v5": {
         "dataDisks": 16,
         "storageAccountType": "Premium_LRS"
       },

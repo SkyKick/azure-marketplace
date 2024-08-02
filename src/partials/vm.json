@@ -164,7 +164,8 @@
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
-          "dataDisks": "[parameters('dataDisks').disks]"
+          "dataDisks": "[parameters('dataDisks').disks]",
+          "diskControllerType": "[if(equals(parameters('vm').size,'Standard_E8bs_v5'), 'NVMe', 'SCSI')]" //NVME if sku is Standard_E8bs_v5 
         },
         "networkProfile": {
           "networkInterfaces": [
