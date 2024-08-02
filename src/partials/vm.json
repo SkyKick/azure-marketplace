@@ -139,7 +139,7 @@
       "properties": "[union(variables('nicProperties'), variables('nsgIpConfig'))]"
     },
     {
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2023-09-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('namespace'), parameters('index'))]",
       "location": "[parameters('vm').shared.location]",
