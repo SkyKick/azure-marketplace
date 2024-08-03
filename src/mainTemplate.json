@@ -1662,7 +1662,7 @@
       },
       "Standard_E8bs_v5": {
         "dataDisks": 16,
-        "storageAccountType": "PremiumV2_LRS"
+        "storageAccountType": "Premium_LRS"
       },
       "Standard_F1": {
         "dataDisks": 2,
