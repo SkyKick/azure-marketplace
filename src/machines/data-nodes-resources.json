@@ -103,7 +103,7 @@
                       "storageAccountType": "[parameters('storageSettings').accountType]"
                     },
                     "caching": "None",
-                    "createOption": "Empty"
+                    "createOption": "attach"
                   }
                 }
               ]
