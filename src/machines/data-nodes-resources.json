@@ -67,7 +67,7 @@
       "condition": "[greater(parameters('storageSettings').dataDisks, 0)]",
       "name": "[concat(variables('namespace'), copyindex(), '-vm-creation')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('namespace'), mod(copyindex(),variables('avSetCount')), '-av-set'))]"
       ],
@@ -99,8 +99,8 @@
                     "diskSizeGB": "[parameters('storageSettings').diskSize]",
                     "lun": "[copyIndex('disks')]",
                     "managedDisk": {
-                      "storageAccountType": "PremiumV2_LRS"
-                      //"storageAccountType": "[parameters('storageSettings').accountType]"
+                      //"storageAccountType": "PremiumV2_LRS"
+                      "storageAccountType": "[parameters('storageSettings').accountType]"
                     },
                     "caching": "None",
                     "createOption": "Empty"
