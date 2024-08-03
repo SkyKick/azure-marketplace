@@ -99,7 +99,8 @@
                     "diskSizeGB": "[parameters('storageSettings').diskSize]",
                     "lun": "[copyIndex('disks')]",
                     "managedDisk": {
-                      "storageAccountType": "[parameters('storageSettings').accountType]"
+                      "storageAccountType": "PremiumV2_LRS"
+                      //"storageAccountType": "[parameters('storageSettings').accountType]"
                     },
                     "caching": "None",
                     "createOption": "Empty"
