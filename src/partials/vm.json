@@ -149,6 +149,9 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('namespace'), parameters('index'), '-nic'))]"
       ],
+      "zones": [
+        "[add(mod(parameters('index'),3),1)]"
+      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vm').size]"
