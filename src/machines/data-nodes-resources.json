@@ -65,42 +65,11 @@
     },
     {
       "condition": "[greater(parameters('storageSettings').dataDisks, 0)]",
-      "type": "Microsoft.Compute/disks",
-      "apiVersion": "2023-10-02",
-      "name": "[concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1))]",
-      "location": "[parameters('vm').shared.location]",
-      "sku": {
-          "name": "[parameters('storageSettings').accountType]"
-      },
-      "zones": [
-          "[add(mod(parameters('index'),3),1)]"
-      ],
-      "properties": {
-          "creationData": {
-              "createOption": "Empty",
-              "logicalSectorSize": 4096
-          },
-          "diskSizeGB": "[parameters('storageSettings').diskSize]",
-          "diskIOPSReadWrite": 24200,
-          "diskMBpsReadWrite": 680,
-          "diskIOPSReadOnly": 3000,
-          "diskMBpsReadOnly": 125,
-          "encryption": {
-              "type": "EncryptionAtRestWithPlatformKey"
-          },
-          "maxShares": 1,
-          "networkAccessPolicy": "AllowAll",
-          "publicNetworkAccess": "Enabled"
-      }
-    },
-    {
-      "condition": "[greater(parameters('storageSettings').dataDisks, 0)]",
       "name": "[concat(variables('namespace'), copyindex(), '-vm-creation')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('namespace'), mod(copyindex(),variables('avSetCount')), '-av-set'))]",
-        "[resourceId('Microsoft.Compute/disks/', concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1)))]"
+        "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('namespace'), mod(copyindex(),variables('avSetCount')), '-av-set'))]"
       ],
       "copy": {
         "name": "[concat(variables('namespace'),'vm-creation-loop')]",
@@ -127,12 +96,15 @@
                   "count": "[variables('diskCount')]",
                   "input": {
                     "name": "[concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1))]",
+                    "diskSizeGB": "[parameters('storageSettings').diskSize]",
+                    "diskIOPSReadWrite": 24200,
+                    "diskMBpsReadWrite": 680,
                     "lun": "[copyIndex('disks')]",
                     "managedDisk": {
-                      "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1)))]"
+                      "storageAccountType": "[parameters('storageSettings').accountType]"
                     },
                     "caching": "None",
-                    "createOption": "attach"
+                    "createOption": "Empty"
                   }
                 }
               ]
