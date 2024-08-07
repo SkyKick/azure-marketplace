@@ -97,6 +97,8 @@
                   "input": {
                     "name": "[concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1))]",
                     "diskSizeGB": "[parameters('storageSettings').diskSize]",
+                    "diskIOPSReadWrite": 24200,
+                    "diskMBpsReadWrite": 680,
                     "lun": "[copyIndex('disks')]",
                     "managedDisk": {
                       "storageAccountType": "PremiumV2_LRS"
