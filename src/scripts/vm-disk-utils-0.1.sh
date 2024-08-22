@@ -122,9 +122,10 @@ has_filesystem() {
 }
 scan_for_new_disks() {
 
-    # Looks for unpartitioned disks, including NVMe disks.
+    # Looks for unpartitioned NVMe disks larger than 1 TiB
     declare -a RET
-    DEVS=($(fdisk -l -o Device | egrep -o "Disk /dev/nvm.*?:" | egrep -o "/dev/nvm.*?[^:]"))
+    DEVS=($(fdisk -l -o Device | egrep -o "Disk /dev/nvm.*?:*? TiB" | egrep -o "/dev/nvm.*?:" |  egrep -o "/dev/nvm.*?[^:]"))
+    
     for DEV in "${DEVS[@]}";
     do
         # The disk will be considered a candidate for partitioning
