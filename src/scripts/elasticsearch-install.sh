@@ -896,7 +896,7 @@ configure_awareness_attributes()
 {
   local ES_CONF=$1
   install_jq
-  log "[configure_awareness_attributes] configure fault and update domain attributes"
+  log "[configure_awareness_attributes] configure fault and update domain and zone attributes"
   local METADATA=$(curl -sH Metadata:true "http://169.254.169.254/metadata/instance?api-version=2021-02-01")
   local FAULT_DOMAIN=$(jq -r .compute.platformFaultDomain <<< $METADATA)
   local UPDATE_DOMAIN=$(jq -r .compute.platformUpdateDomain <<< $METADATA)
@@ -904,8 +904,11 @@ configure_awareness_attributes()
   echo "node.attr.fault_domain: $FAULT_DOMAIN" >> $ES_CONF
   echo "node.attr.update_domain: $UPDATE_DOMAIN" >> $ES_CONF
   echo "node.attr.zone: $ZONE" >> $ES_CONF
-  log "[configure_awareness_attributes] configure shard allocation awareness using fault_domain and update_domain and availability zone"
-  echo "cluster.routing.allocation.awareness.attributes: zone" >> $ES_CONF
+  log "[configure_awareness_attributes] configure shard allocation awareness using fault_domain and update_domain or availability zone"
+  if [-z "$ZONE"]; then # for vms without availbility zones use fault and update domain
+      echo "cluster.routing.allocation.awareness.attributes: fault_domain,update_domain" >> $ES_CONF
+  else
+      echo "cluster.routing.allocation.awareness.attributes: zone" >> $ES_CONF
 }
 
 configure_elasticsearch_yaml()
