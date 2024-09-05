@@ -14,13 +14,7 @@
         "description": "the outer loop index"
       }
     },
-    "availabilitySet": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the availability set"
-      }
-    },
-    "dataDisks": {
+     "dataDisks": {
       "type": "object",
       "defaultValue": {
         "disks": []
@@ -145,7 +139,7 @@
       "properties": "[union(variables('nicProperties'), variables('nsgIpConfig'))]"
     },
     {
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2023-09-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('namespace'), parameters('index'))]",
       "location": "[parameters('vm').shared.location]",
@@ -155,10 +149,10 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('namespace'), parameters('index'), '-nic'))]"
       ],
+      "zones": [
+        "[add(mod(parameters('index'),3),1)]"
+      ],
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
-        },
         "hardwareProfile": {
           "vmSize": "[parameters('vm').size]"
         },
@@ -173,7 +167,8 @@
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
-          "dataDisks": "[parameters('dataDisks').disks]"
+          "dataDisks": "[parameters('dataDisks').disks]",
+          "diskControllerType": "[if(equals(parameters('vm').size,'Standard_E8bs_v5'), 'NVMe', 'SCSI')]" //NVME if sku is Standard_E8bs_v5 
         },
         "networkProfile": {
           "networkInterfaces": [
