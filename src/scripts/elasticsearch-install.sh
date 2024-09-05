@@ -905,7 +905,7 @@ configure_awareness_attributes()
   echo "node.attr.update_domain: $UPDATE_DOMAIN" >> $ES_CONF
   echo "node.attr.zone: $ZONE" >> $ES_CONF
   log "[configure_awareness_attributes] configure shard allocation awareness using fault_domain and update_domain and availability zone"
-  echo "cluster.routing.allocation.awareness.attributes: zone,fault_domain,update_domain" >> $ES_CONF
+  echo "cluster.routing.allocation.awareness.attributes: zone" >> $ES_CONF
 }
 
 configure_elasticsearch_yaml()
