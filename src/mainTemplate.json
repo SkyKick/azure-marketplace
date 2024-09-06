@@ -214,7 +214,7 @@
     },
     "vmSizeKibana": {
       "type": "string",
-      "defaultValue": "Standard_A2_v2",
+      "defaultValue": "Standard_B2ls_v2",
       "allowedValues": [
         "Standard_A2",
         "Standard_A2_v2",
@@ -223,6 +223,7 @@
         "Standard_A2m_v2",
         "Standard_A4m_v2",
         "Standard_A8m_v2",
+        "Standard_B2ls_v2",
         "Standard_D1_v2",
         "Standard_D2_v2",
         "Standard_D3_v2",
@@ -586,7 +587,8 @@
       "defaultValue": "Standard_A0",
       "allowedValues": [
         "Standard_A0",
-        "Standard_B1s"
+        "Standard_B1s",
+        "Standard_B2ts_v2"
       ],
       "metadata": {
         "description": "Size of the Jumpbox nodes"
