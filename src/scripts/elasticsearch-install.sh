@@ -906,7 +906,7 @@ configure_awareness_attributes()
   echo "node.attr.zone: $ZONE" >> $ES_CONF
   log "[configure_awareness_attributes] configure shard allocation awareness using fault_domain and update_domain or availability zone"
  
-  if [ ! -z "${ZONE// }"]; then 
+  if [[ ! -z "${ZONE// }" ]]; then 
       log "[configure_awareness_attributes] found zone, setting as awareness attribute"
       echo "cluster.routing.allocation.awareness.attributes: zone" >> $ES_CONF
   else  # for vms without availbility zones use fault and update domain
