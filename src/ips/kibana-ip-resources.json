@@ -53,6 +53,9 @@
       "tags": {
         "provider": "[toUpper(parameters('elasticTags').provider)]"
       },
+      "sku":{
+        "name": "Standard"  
+      },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
