@@ -903,7 +903,13 @@ configure_awareness_attributes()
   local ZONE=$(jq -r .compute.zone <<< $METADATA)
   echo "node.attr.fault_domain: $FAULT_DOMAIN" >> $ES_CONF
   echo "node.attr.update_domain: $UPDATE_DOMAIN" >> $ES_CONF
-  echo "node.attr.zone: $ZONE" >> $ES_CONF
+  
+  if [[ ! -z "${ZONE// }" ]]; then 
+      echo "node.attr.zone: $ZONE" >> $ES_CONF
+  else
+      echo "node.attr.zone:" >> $ES_CONF
+  fi
+
   log "[configure_awareness_attributes] configure shard allocation awareness using fault_domain and update_domain or availability zone"
  
   if [[ ! -z "${ZONE// }" ]]; then 
