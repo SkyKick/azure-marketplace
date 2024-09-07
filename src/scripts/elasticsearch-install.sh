@@ -906,8 +906,6 @@ configure_awareness_attributes()
   
   if [[ ! -z "${ZONE// }" ]]; then 
       echo "node.attr.zone: $ZONE" >> $ES_CONF
-  else
-      echo "node.attr.zone:" >> $ES_CONF
   fi
 
   log "[configure_awareness_attributes] configure shard allocation awareness using fault_domain and update_domain or availability zone"
