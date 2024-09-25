@@ -444,7 +444,7 @@ install_es()
 # Install DataDog
 install_datadog()
 {
-    bash datadog-install.sh -k "$DATADOG_API_KEY" -r "$NODE_TYPE"
+    bash datadog-install.sh -k "$DATADOG_API_KEY" -n "$CLUSTER_NAME" -r "$NODE_TYPE"
 }
 
 ## Plugins

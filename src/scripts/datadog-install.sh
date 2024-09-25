@@ -7,6 +7,7 @@ help()
     echo ""
     echo "Options:"
     echo "    -k      DataDog API key"
+    echo "    -n      Cluster name"
     echo "    -r      Node role: master, data, client"
     echo "    -h      view this help content"
 }
@@ -24,15 +25,19 @@ log()
 #########################
 
 API_KEY=""
+CLUSTER_NAME=""
 NODE_ROLE=""
 
 #Loop through options passed
-while getopts :k:r:h optname; do
+while getopts :k:n:r:h optname; do
   log "Option $optname set"
   case $optname in
     k) # DataDog API key
       API_KEY="${OPTARG}"
       ;;
+    n) # Cluster Name
+      CLUSTER_NAME="${OPTARG}"
+      ;;  
     r) # Node role
       NODE_ROLE="${OPTARG}"
       ;;
@@ -65,6 +70,12 @@ DD_CONFIG_FILE=/etc/datadog-agent/datadog.yaml
 ELASTIC_CONFIG_FILE=/etc/datadog-agent/conf.d/elastic.d/conf.yaml
 DD_AGENT=/var/tmp/install_datadog_agent.sh
 ELASTIC_LOG_DIR=/var/log/elasticsearch
+VM_NAME=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-02-01&format=text")
+REGION=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/location?api-version=2021-02-01&format=text")
+RESOURCE_GROUP=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/resourceGroupName?api-version=2021-02-01&format=text")
+RESOURCE_GROUP_NUMBER=$(echo "$RESOURCE_GROUP" | grep -o '[0-9]\+')
+DATADOG_HOSTNAME="${VM_NAME}-${CLUSTER_NAME}"
+
 #########################
 # Execution
 #########################
@@ -73,7 +84,7 @@ log "Installing DataDog plugin onto this machine using API Key [$API_KEY]"
 
 wget -q https://raw.githubusercontent.com/DataDog/datadog-agent/master/cmd/agent/install_script.sh -O $DD_AGENT
 chmod +x $DD_AGENT
-DD_API_KEY=$API_KEY DD_AGENT_MAJOR_VERSION=7 $DD_AGENT
+DD_API_KEY=$API_KEY DD_AGENT_MAJOR_VERSION=7 DD_HOSTNAME=$DATADOG_HOSTNAME $DD_AGENT 
 rm /etc/datadog-agent/conf.d/elastic.d/auto_conf.yaml
 
 echo "logs_enabled: true" >> $DD_CONFIG_FILE
