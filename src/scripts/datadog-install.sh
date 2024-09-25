@@ -71,9 +71,6 @@ ELASTIC_CONFIG_FILE=/etc/datadog-agent/conf.d/elastic.d/conf.yaml
 DD_AGENT=/var/tmp/install_datadog_agent.sh
 ELASTIC_LOG_DIR=/var/log/elasticsearch
 VM_NAME=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-02-01&format=text")
-REGION=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/location?api-version=2021-02-01&format=text")
-RESOURCE_GROUP=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/resourceGroupName?api-version=2021-02-01&format=text")
-RESOURCE_GROUP_NUMBER=$(echo "$RESOURCE_GROUP" | grep -o '[0-9]\+')
 DATADOG_HOSTNAME="${VM_NAME}-${CLUSTER_NAME}"
 
 #########################
