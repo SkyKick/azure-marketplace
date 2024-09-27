@@ -72,7 +72,7 @@ DD_AGENT=/var/tmp/install_datadog_agent.sh
 ELASTIC_LOG_DIR=/var/log/elasticsearch
 VM_NAME=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-02-01&format=text")
 TAGS="elasticsearch_cluster:${CLUSTER_NAME}"
-DATADOG_HOSTNAME="${VM_NAME}-${CLUSTER_NAME}"
+DATADOG_HOSTNAME="${CLUSTER_NAME}-${VM_NAME}"
 
 #########################
 # Execution
