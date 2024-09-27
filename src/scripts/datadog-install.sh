@@ -71,6 +71,7 @@ ELASTIC_CONFIG_FILE=/etc/datadog-agent/conf.d/elastic.d/conf.yaml
 DD_AGENT=/var/tmp/install_datadog_agent.sh
 ELASTIC_LOG_DIR=/var/log/elasticsearch
 VM_NAME=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-02-01&format=text")
+TAGS="elasticsearch_cluster:${CLUSTER_NAME}"
 DATADOG_HOSTNAME="${VM_NAME}-${CLUSTER_NAME}"
 
 #########################
@@ -81,7 +82,7 @@ log "Installing DataDog plugin onto this machine using API Key [$API_KEY]"
 
 wget -q https://raw.githubusercontent.com/DataDog/datadog-agent/master/cmd/agent/install_script.sh -O $DD_AGENT
 chmod +x $DD_AGENT
-DD_API_KEY=$API_KEY DD_AGENT_MAJOR_VERSION=7 DD_HOSTNAME=$DATADOG_HOSTNAME $DD_AGENT 
+DD_API_KEY=$API_KEY DD_AGENT_MAJOR_VERSION=7 DD_HOSTNAME=$DATADOG_HOSTNAME DD_TAGS=$TAGS $DD_AGENT 
 rm /etc/datadog-agent/conf.d/elastic.d/auto_conf.yaml
 
 echo "logs_enabled: true" >> $DD_CONFIG_FILE
