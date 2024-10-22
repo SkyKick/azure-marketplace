@@ -761,12 +761,18 @@
         "1TiB",
         "2TiB",
         "4TiB",
+        "4.5TiB",
+        "5TiB",
+        "5.5TiB",
+        "6TiB",
+        "6.5TiB",
+        "7TiB",
         "8TiB",
         "16TiB",
         "32TiB"
       ],
       "metadata": {
-        "description": "The disk size of each attached managed disk, 32GiB, 64GiB, 128GiB, 256 GiB, 512GiB, 1TiB, 2TiB, 4TiB, 8TiB, 16TiB and 32TiB. Default is 1TiB. For Premium Storage, this equates to P6, P10, P15, P20, P30, P40, P50, P60, P70 and P80, respectively."
+        "description": "The disk size of each attached managed disk, 32GiB, 64GiB, 128GiB, 256 GiB, 512GiB, 1TiB, 2TiB, 4TiB, 8TiB, 16TiB and 32TiB. Default is 1TiB. For Premium Storage, this equates to P6, P10, P15, P20, P30, P40, P50, P60, P70 and P80, respectively. With PremiumSSDV2 we now have more flexibility in disk size."
       }
     },
     "vmDataNodeCount": {
@@ -1880,6 +1886,12 @@
       "1TiB": 1024,
       "2TiB": 2048,
       "4TiB": 4096,
+      "4.5TiB": 4608,
+      "5TiB": 5120,
+      "5.5TiB": 5632,
+      "6TiB": 6144,
+      "6.5TiB": 6656,
+      "7TiB": 7168,
       "8TiB": 8192,
       "16TiB": 16384,
       "32TiB": 32767

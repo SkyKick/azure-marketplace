@@ -464,6 +464,30 @@
                       "value": "4TiB"
                     },
                     {
+                      "label": "4.5TiB",
+                      "value": "4.5TiB"
+                    },
+                    {
+                      "label": "5TiB",
+                      "value": "5TiB"
+                    },
+                    {
+                      "label": "5.5TiB",
+                      "value": "5.5TiB"
+                    },
+                    {
+                      "label": "6TiB",
+                      "value": "6TiB"
+                    },
+                    {
+                      "label": "6.5TiB",
+                      "value": "6.5TiB"
+                    },
+                    {
+                      "label": "7TiB",
+                      "value": "7TiB"
+                    },
+                    {
                       "label": "8TiB",
                       "value": "8TiB"
                     },
