@@ -53,8 +53,11 @@
       "tags": {
         "provider": "[toUpper(parameters('elasticTags').provider)]"
       },
+      "sku": {
+        "name": "Standard"
+      },
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Static",
         "dnsSettings": {
           "domainNameLabel": "[concat('kb-', uniqueString(resourceGroup().id, deployment().name, variables('publicIpName')))]"
         }
