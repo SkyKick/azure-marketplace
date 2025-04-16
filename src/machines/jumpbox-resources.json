@@ -111,8 +111,11 @@
       "tags": {
         "provider": "[toUpper(parameters('elasticTags').provider)]"
       },
+      "sku": {
+        "name": "Standard"
+      },      
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAllocationMethod": "Static",
         "dnsSettings": {
           "domainNameLabel": "[concat('jump-', uniqueString(resourceGroup().id, deployment().name))]"
         }
