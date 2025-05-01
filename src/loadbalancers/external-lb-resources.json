@@ -177,6 +177,7 @@
               "backendPort": 443,
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
+              "disableOutboundSnat": true,
               "probe": {
                 "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('externalLoadBalancerName'), 'es-https-external-probe')]"
               }
