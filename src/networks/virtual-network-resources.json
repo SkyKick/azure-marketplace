@@ -28,6 +28,13 @@
       "metadata": {
         "description": "Unique identifiers to allow the Azure Infrastructure to understand the origin of resources deployed to Azure. You do not need to supply a value for this."
       }
+    },
+    "natGatewayName": {
+      "type": "string",
+      "defaultValue": "[concat(parameters('networkSettings').namespacePrefix, 'nat-gateway')]",
+      "metadata": {
+        "description": "Name for natGateway to be associated with subnet"
+      }
     }
   },
   "variables": {
@@ -36,7 +43,10 @@
         {
           "name": "[parameters('networkSettings').subnet.name]",
           "properties": {
-            "addressPrefix": "[parameters('networkSettings').subnet.addressPrefix]"
+            "addressPrefix": "[parameters('networkSettings').subnet.addressPrefix]",
+            "natGateway": {
+                    "id": "[resourceId('Microsoft.Network/natGateways'', parameters('natGatewayName)]"
+                }
           }
         },
         {
@@ -50,7 +60,10 @@
         {
           "name": "[parameters('networkSettings').subnet.name]",
           "properties": {
-            "addressPrefix": "[parameters('networkSettings').subnet.addressPrefix]"
+            "addressPrefix": "[parameters('networkSettings').subnet.addressPrefix]",
+            "natGateway": {
+                    "id": "[resourceId('Microsoft.Network/natGateways'', parameters('natGatewayName)]"
+                }
           }
         }
       ]
