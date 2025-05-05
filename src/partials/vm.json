@@ -112,7 +112,7 @@
     }
   },
   "resources": [
-    {
+/*    {
       "condition": "[and(not(empty(parameters('vm').nsg)), parameters('vm').standardInternalLoadBalancer)]",
       "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -130,7 +130,7 @@
           "domainNameLabel": "[concat(variables('namespace'), parameters('index'), uniqueString(resourceGroup().id, deployment().name))]"
         }
       }
-    },
+    },   */
     {
       "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/networkInterfaces",
@@ -139,9 +139,9 @@
       "tags": {
         "provider": "[toUpper(parameters('elasticTags').provider)]"
       },
-      "dependsOn": [
-        "[variables('publicIpName')]"
-      ],
+ //     "dependsOn": [
+ //       "[variables('publicIpName')]"
+ //    ],
       "properties": "[union(variables('nicProperties'), variables('nsgIpConfig'))]"
     },
     {
