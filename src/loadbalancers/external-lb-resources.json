@@ -119,7 +119,7 @@
     {
       "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('natGatewayIp)']",
+      "name": "[variables('natGatewayIp')]",
       "location": "[parameters('networkSettings').location]",
       "sku": {
         "name": "[parameters('networkSettings').internalSku]"
