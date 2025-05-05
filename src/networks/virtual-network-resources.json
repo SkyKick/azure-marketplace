@@ -45,7 +45,7 @@
           "properties": {
             "addressPrefix": "[parameters('networkSettings').subnet.addressPrefix]",
             "natGateway": {
-                    "id": "[resourceId('Microsoft.Network/natGateways'', parameters('natGatewayName)]"
+                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
                 }
           }
         },
@@ -62,7 +62,7 @@
           "properties": {
             "addressPrefix": "[parameters('networkSettings').subnet.addressPrefix]",
             "natGateway": {
-                    "id": "[resourceId('Microsoft.Network/natGateways'', parameters('natGatewayName)]"
+                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
                 }
           }
         }
