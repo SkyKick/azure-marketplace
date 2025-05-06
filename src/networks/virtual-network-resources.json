@@ -28,16 +28,11 @@
       "metadata": {
         "description": "Unique identifiers to allow the Azure Infrastructure to understand the origin of resources deployed to Azure. You do not need to supply a value for this."
       }
-    },
-    "natGatewayName": {
-      "type": "string",
-      "defaultValue": "[concat(parameters('networkSettings').namespacePrefix, 'nat-gateway')]",
-      "metadata": {
-        "description": "Name for natGateway to be associated with subnet"
-      }
     }
   },
   "variables": {
+    "natGatewayName": "[concat(parameters('networkSettings').namespacePrefix, 'nat-gateway')]",
+    "natGatewayIp": "[concat(parameters('networkSettings').namespacePrefix, 'nat-gateway-ip')]",
     "subnetsOpts": [
       [
         {
@@ -45,7 +40,7 @@
           "properties": {
             "addressPrefix": "[parameters('networkSettings').subnet.addressPrefix]",
             "natGateway": {
-                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+                    "id": "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]"
                 }
           }
         },
@@ -62,7 +57,7 @@
           "properties": {
             "addressPrefix": "[parameters('networkSettings').subnet.addressPrefix]",
             "natGateway": {
-                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+                    "id": "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]"
                 }
           }
         }
@@ -72,6 +67,47 @@
   },
   "resources": [
     {
+      "condition": "[equals(parameters('networkSettings').internalSku, 'Standard')]",
+      "apiVersion": "2019-04-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('natGatewayIp')]",
+      "location": "[parameters('networkSettings').location]",
+      "sku": {
+        "name": "[parameters('networkSettings').internalSku]"
+      },
+      "tags": {
+        "provider": "[toUpper(parameters('elasticTags').provider)]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[if(equals(parameters('networkSettings').internalSku, 'Standard'), 'Static', 'Dynamic')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat('nat-', uniqueString(resourceGroup().id, deployment().name))]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('networkSettings').internalSku, 'Standard')]",
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Network/natGateways",
+      "name": "[variables('natGatewayName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIpAddresses": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayIp'))]"
+          }
+        ],
+        "idleTimeoutInMinutes": 4
+      },
+      "sku": {
+        "name": "Standard"
+      },
+
+      "dependsOn": [
+        "[variables('natGatewayIp')]"
+      ]
+    },
+    {
       "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('networkSettings').name]",
@@ -79,6 +115,11 @@
       "tags": {
         "provider": "[toUpper(parameters('elasticTags').provider)]"
       },
+      
+      "dependsOn": [
+          "[variables('natGatewayName')]"
+      ],
+
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
