@@ -32,9 +32,7 @@
     "https": "[variables('httpsOpts')[parameters('networkSettings').https]]",
     "internalLoadBalancerName": "[concat(parameters('networkSettings').namespacePrefix, 'internal-lb')]",
     "externalLoadBalancerName": "[concat(parameters('networkSettings').namespacePrefix, 'external-lb')]",
-    "externalLoadBalancerIp": "[concat(parameters('networkSettings').namespacePrefix, 'external-lb-ip')]",
-    "natGatewayName": "[concat(parameters('networkSettings').namespacePrefix, 'nat-gateway')]",
-    "natGatewayIp": "[concat(parameters('networkSettings').namespacePrefix, 'nat-gateway-ip')]"
+    "externalLoadBalancerIp": "[concat(parameters('networkSettings').namespacePrefix, 'external-lb-ip')]"
   },
   "resources": [
     {
@@ -114,41 +112,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "apiVersion": "2019-04-01",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('natGatewayIp')]",
-      "location": "[parameters('networkSettings').location]",
-      "sku": {
-        "name": "[parameters('networkSettings').internalSku]"
-      },
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "[if(equals(parameters('networkSettings').internalSku, 'Standard'), 'Static', 'Dynamic')]",
-        "dnsSettings": {
-          "domainNameLabel": "[concat('nat-', uniqueString(resourceGroup().id, deployment().name))]"
-        }
-      }
-    },
-    {
-      "apiVersion": "2020-06-01",
-      "type": "Microsoft.Network/natGateways",
-      "name": "[variables('natGatewayName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publicIpAddresses": [
-          {
-            "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayIp'))]"
-          }
-        ],
-        "idleTimeoutInMinutes": 4
-      },
-      "sku": {
-        "name": "Standard"
       }
     },
     {
