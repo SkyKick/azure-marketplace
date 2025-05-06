@@ -57,7 +57,7 @@
       }
     },
     "osProfile": "[variables(concat(parameters('vm').shared.credentials.authenticationType, '_osProfile'))]",
-    "publicIpName": "[concat(variables('namespace'), parameters('index'), '-ip')]",
+//  "publicIpName": "[concat(variables('namespace'), parameters('index'), '-ip')]",
     "nsgIpConfigs": [
       {},
       {
@@ -79,9 +79,9 @@
                 "id": "[parameters('vm').shared.subnetId]"
               },
               "loadBalancerBackendAddressPools": "[parameters('vm').backendPools]",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
-              }
+//              "publicIPAddress": {
+//               "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+//              }
             }
           }
         ]
