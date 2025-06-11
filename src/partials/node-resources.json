@@ -173,25 +173,11 @@
               "description": "Allows inbound traffic from Standard External LB",
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "9201",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "External Web",
-            "properties": {
-              "description": "Allows inbound traffic from Standard External LB",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
               "destinationPortRange": "443",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 200,
+              "priority": 100,
               "direction": "Inbound"
             }
           }
