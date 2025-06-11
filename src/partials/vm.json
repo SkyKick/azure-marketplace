@@ -63,7 +63,6 @@
       }
     },
     "osProfile": "[variables(concat(parameters('vm').shared.credentials.authenticationType, '_osProfile'))]",
-//    "publicIpName": "[concat(variables('namespace'), parameters('index'), '-ip')]",
     "nsgIpConfigs": [
       {},
       {
@@ -85,9 +84,6 @@
                 "id": "[parameters('vm').shared.subnetId]"
               },
               "loadBalancerBackendAddressPools": "[parameters('vm').backendPools]",
-//              "publicIPAddress": {
-//                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
-//              }
             }
           }
         ]
@@ -112,25 +108,6 @@
     }
   },
   "resources": [
-/*    {
-      "condition": "[and(not(empty(parameters('vm').nsg)), parameters('vm').standardInternalLoadBalancer)]",
-      "apiVersion": "2019-04-01",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIpName')]",
-      "location": "[parameters('vm').shared.location]",
-      "sku": {
-        "name": "Standard"
-      },
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Static",
-        "dnsSettings": {
-          "domainNameLabel": "[concat(variables('namespace'), parameters('index'), uniqueString(resourceGroup().id, deployment().name))]"
-        }
-      }
-    },   */
     {
       "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/networkInterfaces",
@@ -139,9 +116,6 @@
       "tags": {
         "provider": "[toUpper(parameters('elasticTags').provider)]"
       },
- //     "dependsOn": [
- //       "[variables('publicIpName')]"
- //    ],
       "properties": "[union(variables('nicProperties'), variables('nsgIpConfig'))]"
     },
     {
