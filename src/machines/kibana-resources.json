@@ -216,7 +216,7 @@
           "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('namespace'))]",
-            "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('namespace'), '/script')]"
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('namespace'), '/script'))]"
           ],
           "properties": "[parameters('osSettings').extensionSettings.kibanaNginx]"
         }

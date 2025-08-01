@@ -170,7 +170,8 @@
           "apiVersion": "2019-03-01",
           "location": "[parameters('vm').shared.location]",
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('namespace'), parameters('index')))]"
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('namespace'), parameters('index')))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('namespace'), parameters('index'), '/script'))]"
           ],
           "properties": "[parameters('vm').nginxInstallScript]"
         }
