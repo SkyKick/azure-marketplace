@@ -145,11 +145,12 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "[uniqueString(parameters('esSettings').httpCertBlob)]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
           "protectedSettings": {
-            "commandToExecute": "[concat('bash elasticsearch-install.sh -y', variables('commonShortOpts'), variables('commonInstallParams'), '; bash nginx-install.sh', variables('clientNginxInstallParams'))]"
+            "commandToExecute": "[concat('bash nginx-install.sh', variables('clientNginxInstallParams'))]"
           }
         },
         "data": {
@@ -169,11 +170,12 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "[uniqueString(parameters('esSettings').httpCertBlob)]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
           "protectedSettings": {
-            "commandToExecute": "[concat('bash kibana-install.sh -', variables('installPluginsShortOpt'), 'n ', variables('quote'), parameters('esSettings').clusterName, variables('quote'), ' -v ', variables('quote'), parameters('esSettings').version, variables('quote'), ' -u ', variables('quote'), variables('loadBalancerIp') ,variables('quote'), ' -S ', variables('quote'), replace(parameters('esSettings').securityKibanaPwd, variables('quote'), variables('escapedQuote')), variables('quote'), ' -C ', variables('quote'), parameters('topologySettings').kibanaCertBlob, variables('quote'), ' -K ', variables('quote'), parameters('topologySettings').kibanaKeyBlob, variables('quote'), ' -P ', variables('quote'), replace(parameters('topologySettings').kibanaKeyPassphrase, variables('quote'), variables('escapedQuote')), variables('quote'), ' -Y ', variables('quote'), replace(replace(parameters('topologySettings').kibanaYaml, variables('quote'), variables('escapedQuote')), concat(variables('backslash'), variables('doublequote')), variables('doublequote')), variables('quote'), ' -U ', variables('quote'), variables('kibanaDomainName'), variables('quote'), '; bash nginx-install.sh', variables('kibanaNginxInstallParams'))]"
+            "commandToExecute": "[concat('bash nginx-install.sh', variables('kibanaNginxInstallParams'))]"
           }
         },
         "logstash": {
