@@ -145,7 +145,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "[uniqueString(parameters('esSettings').httpCertBlob)]",
+          "forceUpdateTag": "[utcNow()]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
@@ -170,7 +170,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "[uniqueString(parameters('esSettings').httpCertBlob)]",
+          "forceUpdateTag": "[utcNow()]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
