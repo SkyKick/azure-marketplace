@@ -211,12 +211,13 @@
         },
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
+          "condition": "[and(contains(parameters('osSettings').extensionSettings, 'kibanaNginx'), not(empty(parameters('osSettings').extensionSettings.kibanaNginx)))]",
           "name": "[concat(variables('namespace'), '/nginxInstall')]",
           "apiVersion": "2019-03-01",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('namespace'))]",
-            "[resourceId(concat('Microsoft.Compute/virtualMachines/', variables('namespace'), '/extensions/script'))]" 
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('namespace'), 'script')]" 
           ],
           "properties": "[parameters('osSettings').extensionSettings.kibanaNginx]"
         }
