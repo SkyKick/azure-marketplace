@@ -71,6 +71,13 @@
       "metadata": {
         "description": "Aggregate for all monitoring settings"
       }
+    },
+    "currentTime": {
+      "type": "string",
+      "defaultValue": "[utcNow()]",
+      "metadata": {
+        "description": "Current deployment time for forcing extension updates"
+      }
     }
   },
   "variables": {
@@ -145,7 +152,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "[utcNow()]",
+          "forceUpdateTag": "[parameters('currentTime')]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
@@ -170,7 +177,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
-          "forceUpdateTag": "[utcNow()]",
+          "forceUpdateTag": "[parameters('currentTime')]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
