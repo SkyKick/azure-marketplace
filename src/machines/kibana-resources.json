@@ -204,9 +204,9 @@
           "name": "[concat(variables('namespace'), '/script')]",
           "apiVersion": "2019-03-01",
           "location": "[parameters('location')]",
-          "dependsOn": [
+/*           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('namespace'))]"
-          ],
+          ], */
           "properties": "[parameters('osSettings').extensionSettings.kibana]"
         }
       ]
