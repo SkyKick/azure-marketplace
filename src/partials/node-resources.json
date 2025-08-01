@@ -271,7 +271,7 @@
               "count": "[parameters('topologySettings').vmClientNodeCount]",
               "storageAccountType": "Standard_LRS",
               "backendPools": "[parameters('topologySettings').loadBalancerBackEndPools]",
-              "imageReference": "[parameters('osSettings').imageReference]",
+              //"imageReference": "[parameters('osSettings').imageReference]",
               "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
               "acceleratedNetworking": "[if(equals(parameters('topologySettings').vmClientNodeAcceleratedNetworking, 'Default'), if(contains(variables('vmAcceleratedNetworking'), parameters('topologySettings').vmSizeClientNodes), 'Yes', 'No'), parameters('topologySettings').vmClientNodeAcceleratedNetworking)]",
               "nsg": "[if(variables('standardInternalOrExternalLoadBalancer'), variables('vmNsgName'), '')]",

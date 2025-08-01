@@ -180,7 +180,7 @@
         },
         "osProfile": "[variables('osProfile')]",
         "storageProfile": {
-          "imageReference": "[parameters('osSettings').imageReference]",
+          //"imageReference": "[parameters('osSettings').imageReference]",
           "osDisk": {
             "name": "[concat(variables('namespace'), '-osdisk')]",
             "managedDisk": {

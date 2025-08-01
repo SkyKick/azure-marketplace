@@ -132,7 +132,7 @@
         },
         "osProfile": "[variables('osProfile')]",
         "storageProfile": {
-          "imageReference": "[parameters('vm').imageReference]",
+          //"imageReference": "[parameters('vm').imageReference]",
           "osDisk": {
             "name": "[concat(variables('namespace'), parameters('index'), '-osdisk')]",
             "managedDisk": {
