@@ -158,9 +158,9 @@
           "name": "[concat(variables('namespace'), parameters('index'), '/script')]",
           "apiVersion": "2019-03-01",
           "location": "[parameters('vm').shared.location]",
-/*           "dependsOn": [
+          "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('namespace'), parameters('index')))]"
-          ], */
+          ],
           "properties": "[parameters('vm').installScript]"
         }
       ]
