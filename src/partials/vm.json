@@ -170,13 +170,13 @@
         },
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "condition": "[and(contains(parameters('vm'), 'nginxInstallScript'), not(empty(parameters('vm').nginxInstallScript)))]",
+          "condition": "[and(contains(parameters('vm'), 'nginxInstallScript'), not(empty(parameters('vm').nginxInstallScript)), contains(parameters('vm').namespace, 'client'))]",
           "name": "[concat(variables('namespace'), parameters('index'), '/nginxInstall')]",
           "apiVersion": "2019-03-01",
           "location": "[parameters('vm').shared.location]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('namespace'), parameters('index')))]",
-            "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('namespace'), parameters('index'), '/script'))]"
+            "[resourceId(concat('Microsoft.Compute/virtualMachines/', concat(variables('namespace'), parameters('index'), '/extensions/script')))]"
           ],
           "properties": "[parameters('vm').nginxInstallScript]"
         }
