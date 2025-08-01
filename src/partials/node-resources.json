@@ -267,6 +267,7 @@
               "shared": "[parameters('commonVmSettings')]",
               "namespace": "[concat(parameters('commonVmSettings').namespacePrefix, 'client-')]",
               "installScript": "[parameters('osSettings').extensionSettings.client]",
+              "nginxInstallScript": "[parameters('osSettings').extensionSettings.clientNginx]",
               "size": "[parameters('topologySettings').vmSizeClientNodes]",
               "count": "[parameters('topologySettings').vmClientNodeCount]",
               "storageAccountType": "Standard_LRS",
