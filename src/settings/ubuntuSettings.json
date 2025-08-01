@@ -150,7 +150,7 @@
         "client": {
           "publisher": "Microsoft.Azure.Extensions",
           "type": "CustomScript",
-          "typeHandlerVersion": "2.0",
+          "typeHandlerVersion": "2.1",
           "autoUpgradeMinorVersion": true,
           "forceUpdateTag": "[parameters('currentTime')]",
           "settings": {
@@ -175,7 +175,7 @@
         "kibana": {
           "publisher": "Microsoft.Azure.Extensions",
           "type": "CustomScript",
-          "typeHandlerVersion": "2.0",
+          "typeHandlerVersion": "2.1",
           "autoUpgradeMinorVersion": true,
           "forceUpdateTag": "[parameters('currentTime')]",
           "settings": {
