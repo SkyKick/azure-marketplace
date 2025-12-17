@@ -212,7 +212,7 @@
     },
     "vmSizeKibana": {
       "type": "string",
-      "defaultValue": "Standard_B2ls_v2",
+      "defaultValue": "Standard_B2as_v2",
       "allowedValues": [
         "Standard_A2",
         "Standard_A2_v2",
@@ -222,6 +222,7 @@
         "Standard_A4m_v2",
         "Standard_A8m_v2",
         "Standard_B2ls_v2",
+        "Standard_B2as_v2",
         "Standard_D1_v2",
         "Standard_D2_v2",
         "Standard_D3_v2",
@@ -582,11 +583,12 @@
     },
     "vmSizeJumpbox": {
       "type": "string",
-      "defaultValue": "Standard_A0",
+      "defaultValue": "Standard_B2ats_v2",
       "allowedValues": [
         "Standard_A0",
         "Standard_B1s",
-        "Standard_B2ts_v2"
+        "Standard_B2ts_v2",
+        "Standard_B2ats_v2"
       ],
       "metadata": {
         "description": "Size of the Jumpbox nodes"
@@ -952,7 +954,7 @@
     },
     "vmSizeClientNodes": {
       "type": "string",
-      "defaultValue": "Standard_DS1_v2",
+      "defaultValue": "Standard_D8as_v5",
       "allowedValues": [
         "Standard_A1_v2",
         "Standard_A2_v2",
@@ -974,6 +976,7 @@
         "Standard_D2as_v4",
         "Standard_D4as_v4",
         "Standard_D8as_v4",
+        "Standard_D8as_v5",
         "Standard_D16as_v4",
         "Standard_D32as_v4",
         "Standard_D2_v3",

@@ -34,7 +34,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A2_v2",
+      "defaultValue": "Standard_B2as_v2",
       "metadata": {
         "description": "Size of the Kibana VM"
       }
