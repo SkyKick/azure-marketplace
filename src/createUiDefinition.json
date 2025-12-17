@@ -782,6 +782,7 @@
                     "Standard_D2as_v4",
                     "Standard_D4as_v4",
                     "Standard_D8as_v4",
+                    "Standard_D8as_v5",
                     "Standard_D16as_v4",
                     "Standard_D32as_v4",
                     "Standard_D2_v3",
@@ -928,7 +929,7 @@
                 "toolTip": "Choose VM SKU, Standard D1, D2, D3",
                 "visible": "[equals(steps('externalAccessStep').kibanaSection.kibana, 'Yes')]",
                 "recommendedSizes": [
-                  "Standard_A2_v2",
+                  "Standard_B2as_v2",
                   "Standard_A4_v2",
                   "Standard_A8_v2"
                 ],
@@ -941,6 +942,7 @@
                     "Standard_A2m_v2",
                     "Standard_A4m_v2",
                     "Standard_A8m_v2",
+                    "Standard_B2as_v2",
                     "Standard_D1_v2",
                     "Standard_D2_v2",
                     "Standard_D3_v2",
