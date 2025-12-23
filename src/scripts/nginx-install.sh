@@ -121,6 +121,75 @@ install_certificate()
   openssl pkcs12 -in $CERT_DIR/host.pfx -clcerts -nokeys -out $CRT_PATH -passin pass:"$PFX_PWD"
   openssl pkcs12 -in $CERT_DIR/host.pfx -nodes -passin pass:"$PFX_PWD" | openssl rsa -out $KEY_PATH
   rm $CERT_DIR/host.pfx
+
+
+  # ---- Auto-fetch intermediate from AIA ----
+  echo "[INFO] Discovering CA Issuers AIA URL from leaf cert..."
+  AIA_URL=$(openssl x509 -in "$CRT_PATH" -text -noout \
+    | awk -F'URI:' '/CA Issuers/ {print $2; exit}' \
+    | tr -d '[:space:]')
+  
+  if [[ -z "$AIA_URL" ]]; then
+    echo "[WARN] No CA Issuers URI found in leaf certificate."
+    echo "[HINT] You must provide the intermediate PEM manually at $CERT_DIR/intermediate.pem"
+  else
+    echo "[INFO] AIA URL: $AIA_URL"
+    TMP_INT="$CERT_DIR/intermediate.der"
+    INT_PEM="$CERT_DIR/intermediate.pem"
+  
+    echo "[INFO] Downloading intermediate from CA Issuers..."
+    if [[ "$AIA_URL" =~ ^https?:// ]]; then
+      if curl -fsSL "$AIA_URL" -o "$TMP_INT"; then
+        echo "[INFO] Successfully downloaded intermediate certificate"
+        
+        # Detect format and convert to PEM if needed
+        if file "$TMP_INT" | grep -qi 'ASCII text'; then
+          echo "[INFO] Intermediate is already in PEM format"
+          mv "$TMP_INT" "$INT_PEM"
+        else
+          echo "[INFO] Converting intermediate from DER to PEM..."
+          if openssl x509 -inform DER -in "$TMP_INT" -out "$INT_PEM" 2>/dev/null; then
+            rm -f "$TMP_INT"
+          else
+            echo "[ERROR] Failed to convert intermediate certificate"
+            rm -f "$TMP_INT"
+          fi
+        fi
+        
+        # Verify we got a valid certificate
+        if [[ -f "$INT_PEM" ]] && openssl x509 -in "$INT_PEM" -noout 2>/dev/null; then
+          echo "[SUCCESS] Intermediate certificate obtained and validated"
+        else
+          echo "[ERROR] Failed to obtain valid intermediate certificate"
+          rm -f "$INT_PEM"
+        fi
+      else
+        echo "[ERROR] Failed to download from $AIA_URL"
+      fi
+    else
+      echo "[ERROR] Unsupported AIA scheme: $AIA_URL"
+      echo "[HINT] Provide intermediate PEM manually at $INT_PEM"
+    fi
+  fi
+
+    # Some CAs chain multiple intermediates. If AIA serves a PKCS7 bundle, convert like:
+    # openssl pkcs7 -print_certs -inform DER -in bundle.der -out intermediate.pem
+    # (Add detection if you encounter pkcs7 bundles in your environment.)
+
+  # ---- Build full chain (leaf + intermediate) ----
+  FULLCHAIN="$CERT_DIR/fullchain.pem"
+  if [[ -s "$CERT_DIR/intermediate.pem" ]]; then
+    echo "[INFO] Building fullchain.pem (leaf + intermediate)..."
+    cat "$CRT_PATH" "$CERT_DIR/intermediate.pem" > "$FULLCHAIN"
+  else
+    echo "[WARN] Intermediate PEM not available; using leaf only for now (will trigger scanner warnings)."
+    cp "$CRT_PATH" "$FULLCHAIN"
+  fi
+
+  echo "[SUCCESS] Certificate install complete."
+  echo "         Leaf:        $CRT_PATH"
+  echo "         Key:         $KEY_PATH"
+  echo "         Full chain:  $FULLCHAIN"
 }
 
 write_server_config()
@@ -149,7 +218,7 @@ http {
 
 	ssl_protocols TLSv1.2; # omit SSLv3 because of POODLE (CVE-2014-3566)
 	ssl_prefer_server_ciphers on;
-	ssl_certificate $CRT_PATH;
+	ssl_certificate $FULLCHAIN;
 	ssl_certificate_key $KEY_PATH;
 
 	access_log $NGINX_LOG_DIR/access.log;
