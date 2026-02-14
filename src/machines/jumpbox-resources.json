@@ -174,7 +174,7 @@
           "osDisk": {
             "name": "[concat(variables('namespace'), '-osdisk')]",
             "managedDisk": {
-              "storageAccountType": "Standard_LRS"
+              "storageAccountType": "StandardSSD_LRS"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"

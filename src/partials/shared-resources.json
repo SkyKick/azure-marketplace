@@ -42,7 +42,7 @@
       "apiVersion": "2019-04-01",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard_LRS"
+        "name": "StandardSSD_LRS"
       },
       "kind": "Storage",
       "properties": {
