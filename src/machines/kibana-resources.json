@@ -100,13 +100,13 @@
       "properties": {
         "securityRules": [
           {
-            "name": "SSH",
+            "name": "SSH-Internal",
             "properties": {
-              "description": "Allows inbound SSH traffic from anyone",
+              "description": "Allows SSH traffic from private vnet connections only (jumpbox)",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "[parameters('osSettings').managementPort]",
-              "sourceAddressPrefix": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
