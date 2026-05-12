@@ -73,7 +73,16 @@
         }
       }
     },
-    "osProfile": "[variables(concat(parameters('credentials').authenticationType, '_osProfile'))]"
+    "osProfile": "[variables(concat(parameters('credentials').authenticationType, '_osProfile'))]",
+    "regionalSourcePrefixes": {  //Netskope publisher IP ranges by region, used to scope jumpbox NSG rules. 
+      "centralus": "104.43.135.6/31",
+      "westus2": "20.230.136.6/31",
+      "westeurope": "104.40.254.56/31",
+      "uksouth": "51.140.141.188/31",
+      "australiaeast": "20.92.240.8/31"
+    },
+    "normalizedLocation": "[replace(toLower(parameters('location')), ' ', '')]",
+    "jumpboxSourcePrefix": "[if(contains(variables('regionalSourcePrefixes'), variables('normalizedLocation')), variables('regionalSourcePrefixes')[variables('normalizedLocation')], 'Internet')]"
   },
   "resources": [
     {
@@ -87,13 +96,13 @@
       "properties": {
         "securityRules": [
           {
-            "name": "SSH",
+            "name": "SSH-Netskope",
             "properties": {
-              "description": "Allows SSH traffic",
+              "description": "[concat('SSH only allowed from Netskope publisher in ', variables('normalizedLocation'))]",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "[parameters('osSettings').managementPort]",
-              "sourceAddressPrefix": "*",
+              "sourceAddressPrefix": "[variables('jumpboxSourcePrefix')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
