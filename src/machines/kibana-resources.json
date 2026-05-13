@@ -94,9 +94,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "properties": {
         "securityRules": [
           {
@@ -135,9 +133,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
       ],
@@ -168,9 +164,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('namespace')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[union(parameters('elasticTags'), createObject('elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', 'kibana'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],

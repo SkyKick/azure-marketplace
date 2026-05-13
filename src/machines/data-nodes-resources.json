@@ -87,7 +87,7 @@
             }
           },
           "elasticTags": {
-            "value": "[parameters('elasticTags')]"
+            "value": "[union(parameters('elasticTags'), createObject('elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('data', copyindex())))]"
           }
         }
       }
@@ -115,7 +115,7 @@
             "value": "[copyindex()]"
           },
           "elasticTags": {
-            "value": "[parameters('elasticTags')]"
+            "value": "[union(parameters('elasticTags'), createObject('elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('data', copyindex())))]"
           }
         }
       }

@@ -236,9 +236,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('vmNsgName')]",
       "location": "[parameters('commonVmSettings').location]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "properties": "[variables('vmNsgProperties')[if(variables('standardExternalLoadBalancer'), 1, 0)]]"
     },
     {

@@ -40,9 +40,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(variables('namespace'), 'av-set')]",
       "location": "[parameters('vm').shared.location]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "properties": {
         "platformUpdateDomainCount": 3,
         "platformFaultDomainCount": "[parameters('vm').platformFaultDomainCount]"
