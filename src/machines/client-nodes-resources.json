@@ -52,7 +52,7 @@
     {
       "name": "[concat(variables('namespace'), copyindex(), '-vm-creation')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/availabilitySets', concat(variables('namespace'), 'av-set'))]"
       ],
@@ -77,7 +77,7 @@
             "value": "[copyindex()]"
           },
           "elasticTags": {
-            "value": "[union(parameters('elasticTags'), createObject('elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('client', copyindex())))]"
+            "value": "[union(parameters('elasticTags'), createObject('datadog', 'monitored', 'elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('client', copyindex())))]"
           }
         }
       }

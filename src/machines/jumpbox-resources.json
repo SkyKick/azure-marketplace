@@ -161,7 +161,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('namespace')]",
       "location": "[parameters('location')]",
-      "tags": "[union(parameters('elasticTags'), createObject('elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', 'jumpbox'))]",
+      "tags": "[union(parameters('elasticTags'), createObject('datadog', 'monitored', 'elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', 'jumpbox'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],

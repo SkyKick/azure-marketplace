@@ -87,7 +87,7 @@
             }
           },
           "elasticTags": {
-            "value": "[union(parameters('elasticTags'), createObject('elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('data', copyindex())))]"
+            "value": "[union(parameters('elasticTags'), createObject('datadog', 'monitored', 'elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('data', copyindex())))]"
           }
         }
       }
@@ -96,7 +96,7 @@
       "condition": "[equals(parameters('storageSettings').dataDisks, 0)]",
       "name": "[concat(variables('namespace'), copyindex(), '-vm-nodisks-creation')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "copy": {
         "name": "[concat(variables('namespace'),'vm-creation-loop')]",
         "count": "[parameters('vm').count]"
@@ -115,7 +115,7 @@
             "value": "[copyindex()]"
           },
           "elasticTags": {
-            "value": "[union(parameters('elasticTags'), createObject('elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('data', copyindex())))]"
+            "value": "[union(parameters('elasticTags'), createObject('datadog', 'monitored', 'elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('data', copyindex())))]"
           }
         }
       }
