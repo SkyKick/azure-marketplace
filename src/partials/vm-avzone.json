@@ -107,7 +107,9 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('namespace'), parameters('index'), '-nic')]",
       "location": "[parameters('vm').shared.location]",
-      "tags": "[parameters('elasticTags')]",
+      "tags": {
+        "provider": "[toUpper(parameters('elasticTags').provider)]"
+      },
       "properties": "[union(variables('nicProperties'), variables('nsgIpConfig'))]"
     },
     {
