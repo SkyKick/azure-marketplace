@@ -19,9 +19,7 @@
     "elasticTags": {
       "type": "object",
       "defaultValue": {
-        "provider": "648D2193-0CE0-4EFB-8A82-AF9792184FD9",
-        "datadog": "monitored",
-        "elasticsearchpatchallgroup": "patch-all-no-reboot"
+        "provider": "648D2193-0CE0-4EFB-8A82-AF9792184FD9"
       },
       "metadata": {
         "description": "Unique identifiers to allow the Azure Infrastructure to understand the origin of resources deployed to Azure. You do not need to supply a value for this."
