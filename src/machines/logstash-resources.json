@@ -77,7 +77,7 @@
             "value": "[copyindex()]"
           },
           "elasticTags": {
-            "value": "[union(parameters('elasticTags'), createObject('datadog', 'monitored', 'elasticsearchpatchallgroup', 'patch-all-no-reboot', 'elasticsearchpatchgroup', concat('logstash', copyindex())))]"
+            "value": "[union(parameters('elasticTags'), createObject('elasticsearchpatchgroup', concat('logstash', copyindex())))]"
           }
         }
       }
