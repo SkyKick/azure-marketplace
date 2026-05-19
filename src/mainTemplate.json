@@ -19,8 +19,7 @@
     "elasticTags": {
       "type": "object",
       "defaultValue": {
-        "provider": "648D2193-0CE0-4EFB-8A82-AF9792184FD9",
-        "tracking": "pid-B2C934E3-29F3-4194-BFD2-4F1370B78E0C"
+        "provider": "648D2193-0CE0-4EFB-8A82-AF9792184FD9"
       },
       "metadata": {
         "description": "Unique identifiers to allow the Azure Infrastructure to understand the origin of resources deployed to Azure. You do not need to supply a value for this."
@@ -2045,22 +2044,9 @@
   },
   "resources": [
     {
-      "name": "[parameters('elasticTags').tracking]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": []
-        }
-      }
-    },
-    {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -2087,7 +2073,7 @@
       "condition": "[equals(parameters('vNetNewOrExisting'), 'new')]",
       "name": "network",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -2110,7 +2096,7 @@
     {
       "name": "kibana-ip",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -2136,7 +2122,7 @@
     {
       "name": "loadbalancer",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments', 'network')]"
@@ -2163,7 +2149,7 @@
     {
       "name": "virtual-machines",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'loadbalancer')]",
         "[resourceId('Microsoft.Resources/deployments', 'kibana-ip')]"
