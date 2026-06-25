@@ -73,7 +73,16 @@
         }
       }
     },
-    "osProfile": "[variables(concat(parameters('credentials').authenticationType, '_osProfile'))]"
+    "osProfile": "[variables(concat(parameters('credentials').authenticationType, '_osProfile'))]",
+    "regionalSourcePrefixes": {  //Netskope publisher IP ranges by region, used to scope jumpbox NSG rules. 
+      "centralus": "104.43.135.6/31",
+      "westus2": "20.230.136.6/31",
+      "westeurope": "104.40.254.56/31",
+      "uksouth": "51.140.141.188/31",
+      "australiaeast": "20.92.240.8/31"
+    },
+    "normalizedLocation": "[replace(toLower(parameters('location')), ' ', '')]",
+    "jumpboxSourcePrefix": "[if(contains(variables('regionalSourcePrefixes'), variables('normalizedLocation')), variables('regionalSourcePrefixes')[variables('normalizedLocation')], 'Internet')]"
   },
   "resources": [
     {
@@ -81,19 +90,17 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "properties": {
         "securityRules": [
           {
-            "name": "SSH",
+            "name": "SSH-Netskope",
             "properties": {
-              "description": "Allows SSH traffic",
+              "description": "[concat('SSH only allowed from Netskope publisher in ', variables('normalizedLocation'))]",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "[parameters('osSettings').managementPort]",
-              "sourceAddressPrefix": "*",
+              "sourceAddressPrefix": "[variables('jumpboxSourcePrefix')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
@@ -108,9 +115,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "sku": {
         "name": "Standard"
       },      
@@ -126,9 +131,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
@@ -158,9 +161,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('namespace')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[union(parameters('elasticTags'), createObject('elasticsearchpatchgroup', 'jumpbox'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],

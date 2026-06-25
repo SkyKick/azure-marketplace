@@ -94,19 +94,17 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "properties": {
         "securityRules": [
           {
-            "name": "SSH",
+            "name": "SSH-Internal",
             "properties": {
-              "description": "Allows inbound SSH traffic from anyone",
+              "description": "Allows SSH traffic from private vnet connections only (jumpbox)",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "[parameters('osSettings').managementPort]",
-              "sourceAddressPrefix": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
@@ -135,9 +133,7 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
       ],
@@ -168,9 +164,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('namespace')]",
       "location": "[parameters('location')]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[union(parameters('elasticTags'), createObject('elasticsearchpatchgroup', 'kibana'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],
