@@ -142,7 +142,7 @@
           "osDisk": {
             "name": "[concat(variables('namespace'), parameters('index'), '-osdisk')]",
             "managedDisk": {
-              "storageAccountType": "[parameters('vm').storageAccountType]"
+              "storageAccountType": "[reference(resourceId('Microsoft.Compute/disks', concat(variables('namespace'), parameters('index'), '-osdisk')), '2022-07-02').sku.name]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"

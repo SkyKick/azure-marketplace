@@ -174,7 +174,7 @@
           "osDisk": {
             "name": "[concat(variables('namespace'), '-osdisk')]",
             "managedDisk": {
-              "storageAccountType": "Standard_LRS"
+              "storageAccountType": "[reference(resourceId('Microsoft.Compute/disks', concat(variables('namespace'), '-osdisk')), '2022-07-02').sku.name]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
