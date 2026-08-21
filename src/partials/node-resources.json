@@ -193,7 +193,7 @@
       "condition": "[equals(parameters('topologySettings').dataNodesAreMasterEligible, 'No')]",
       "name": "master-nodes",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [],
       "properties": {
         "mode": "Incremental",
@@ -214,7 +214,7 @@
               "namespace": "[concat(parameters('commonVmSettings').namespacePrefix, 'master-')]",
               "installScript": "[parameters('osSettings').extensionSettings.master]",
               "size": "[parameters('topologySettings').vmSizeMasterNodes]",
-              "storageAccountType": "Standard_LRS",
+              "storageAccountType": "StandardSSD_LRS",
               "count": 3,
               "backendPools": [],
               "imageReference": "[parameters('osSettings').imageReference]",
@@ -236,16 +236,14 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('vmNsgName')]",
       "location": "[parameters('commonVmSettings').location]",
-      "tags": {
-        "provider": "[toUpper(parameters('elasticTags').provider)]"
-      },
+      "tags": "[parameters('elasticTags')]",
       "properties": "[variables('vmNsgProperties')[if(variables('standardExternalLoadBalancer'), 1, 0)]]"
     },
     {
       "condition": "[greater(parameters('topologySettings').vmClientNodeCount, 0)]",
       "name": "client-nodes",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [
         "[variables('vmNsgName')]"
       ],
@@ -269,7 +267,7 @@
               "installScript": "[parameters('osSettings').extensionSettings.client]",
               "size": "[parameters('topologySettings').vmSizeClientNodes]",
               "count": "[parameters('topologySettings').vmClientNodeCount]",
-              "storageAccountType": "Standard_LRS",
+              "storageAccountType": "StandardSSD_LRS",
               "backendPools": "[parameters('topologySettings').loadBalancerBackEndPools]",
               "imageReference": "[parameters('osSettings').imageReference]",
               "platformFaultDomainCount": "[variables('platformFaultDomainCount')]",
@@ -287,7 +285,7 @@
     {
       "name": "data-nodes",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [
         "[variables('vmNsgName')]"
       ],
@@ -332,7 +330,7 @@
     {
       "name": "jumpbox",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [],
       "properties": {
         "mode": "Incremental",
@@ -368,7 +366,7 @@
     {
       "name": "kibana",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [],
       "properties": {
         "mode": "Incremental",
@@ -408,7 +406,7 @@
       "condition": "[equals(parameters('topologySettings').logstash, 'Yes')]",
       "name": "logstash",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [],
       "properties": {
         "mode": "Incremental",
@@ -429,7 +427,7 @@
               "namespace": "[concat(parameters('commonVmSettings').namespacePrefix, 'logstash-')]",
               "installScript": "[parameters('osSettings').extensionSettings.logstash]",
               "size": "[parameters('topologySettings').vmSizeLogstash]",
-              "storageAccountType": "Standard_LRS",
+              "storageAccountType": "StandardSSD_LRS",
               "count": "[parameters('topologySettings').vmLogstashCount]",
               "backendPools": [],
               "imageReference": "[parameters('osSettings').imageReference]",

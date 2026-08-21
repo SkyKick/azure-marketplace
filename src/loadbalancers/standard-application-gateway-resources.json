@@ -123,7 +123,7 @@
             "properties": {
               "protocol": "Tcp",
               "port": 9200,
-              "intervalInSeconds": 30,
+              "intervalInSeconds": 5,
               "numberOfProbes": 3
             }
           }

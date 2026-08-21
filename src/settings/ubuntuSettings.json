@@ -79,6 +79,7 @@
     "backslash": "\\",
     "escapedQuote": "[concat(variables('quote'), variables('doublequote'), variables('quote'), variables('doublequote'), variables('quote'))]",
     "nodesTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('partials/node-resources.json', parameters('_artifactsLocationSasToken')))]",
+    "elasticTags": "[union(parameters('elasticTags'), createObject('datadog', 'monitored', 'elasticsearchpatchallgroup', 'patch-all-no-reboot'))]",
     "namespacePrefix": "[parameters('topologySettings').vmHostNamePrefix]",
     "kibanaDomainName": "[if(not(empty(parameters('esSettings').samlMetadataUri)),if(not(empty(parameters('esSettings').samlServiceProviderUri)),parameters('esSettings').samlServiceProviderUri,parameters('kibanaIp')),'')]",
     "loadBalancerIp": "[concat(if(equals(parameters('networkSettings').https, 'Yes'), 'https', 'http'), '://', parameters('topologySettings').vNetLoadBalancerIp, ':9200')]",
@@ -223,7 +224,7 @@
             "value": "[parameters('networkSettings')]"
           },
           "elasticTags": {
-            "value": "[parameters('elasticTags')]"
+            "value": "[variables('elasticTags')]"
           }
         }
       }

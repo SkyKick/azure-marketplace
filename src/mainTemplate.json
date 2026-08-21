@@ -19,8 +19,7 @@
     "elasticTags": {
       "type": "object",
       "defaultValue": {
-        "provider": "648D2193-0CE0-4EFB-8A82-AF9792184FD9",
-        "tracking": "pid-B2C934E3-29F3-4194-BFD2-4F1370B78E0C"
+        "provider": "648D2193-0CE0-4EFB-8A82-AF9792184FD9"
       },
       "metadata": {
         "description": "Unique identifiers to allow the Azure Infrastructure to understand the origin of resources deployed to Azure. You do not need to supply a value for this."
@@ -1408,71 +1407,71 @@
     "dataSkuSettings": {
       "Standard_A1_v2": {
         "dataDisks": 2,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_A2_v2": {
         "dataDisks": 4,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_A4_v2": {
         "dataDisks": 8,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_A8_v2": {
         "dataDisks": 16,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_A2m_v2": {
         "dataDisks": 4,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_A4m_v2": {
         "dataDisks": 8,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_A8m_v2": {
         "dataDisks": 16,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D1_v2": {
         "dataDisks": 2,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D2_v2": {
         "dataDisks": 4,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D3_v2": {
         "dataDisks": 8,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D4_v2": {
         "dataDisks": 16,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D5_v2": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D11_v2": {
         "dataDisks": 8,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D12_v2": {
         "dataDisks": 16,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D13_v2": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D14_v2": {
         "dataDisks": 64,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D15_v2": {
         "dataDisks": 64,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D2as_v4": {
         "dataDisks": 4,
@@ -1496,31 +1495,31 @@
       },
       "Standard_D2_v3": {
         "dataDisks": 4,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D4_v3": {
         "dataDisks": 8,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D8_v3": {
         "dataDisks": 16,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D16_v3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D32_v3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D48_v3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_D64_v3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_DS1_v2": {
         "dataDisks": 4,
@@ -1592,31 +1591,31 @@
       },
       "Standard_E2_v3": {
         "dataDisks": 4,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_E4_v3": {
         "dataDisks": 8,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_E8_v3": {
         "dataDisks": 16,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_E16_v3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_E32_v3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_E64_v3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_E64i_v3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_E2s_v3": {
         "dataDisks": 4,
@@ -1676,23 +1675,23 @@
       },
       "Standard_F1": {
         "dataDisks": 2,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_F2": {
         "dataDisks": 4,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_F4": {
         "dataDisks": 8,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_F8": {
         "dataDisks": 16,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_F16": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_F1s": {
         "dataDisks": 2,
@@ -1744,23 +1743,23 @@
       },
       "Standard_G1": {
         "dataDisks": 8,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_G2": {
         "dataDisks": 16,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_G3": {
         "dataDisks": 32,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_G4": {
         "dataDisks": 64,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_G5": {
         "dataDisks": 64,
-        "storageAccountType": "Standard_LRS"
+        "storageAccountType": "StandardSSD_LRS"
       },
       "Standard_GS1": {
         "dataDisks": 8,
@@ -1932,7 +1931,7 @@
     "clientResourceIndex": "[mod(add(parameters('vmClientNodeCount'),2),add(parameters('vmClientNodeCount'),1))]",
     "storageAccountOverrides": {
       "Default": "[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].storageAccountType]",
-      "Standard": "Standard_LRS"
+      "Standard": "StandardSSD_LRS"
     },
     "resolvedStorageAccountType": "[variables('storageAccountOverrides')[parameters('storageAccountType')]]",
     "tmpVmSizeDataDisks": "[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].dataDisks]",
@@ -2047,22 +2046,9 @@
   },
   "resources": [
     {
-      "name": "[parameters('elasticTags').tracking]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": []
-        }
-      }
-    },
-    {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -2089,7 +2075,7 @@
       "condition": "[equals(parameters('vNetNewOrExisting'), 'new')]",
       "name": "network",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -2112,7 +2098,7 @@
     {
       "name": "kibana-ip",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -2138,7 +2124,7 @@
     {
       "name": "loadbalancer",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'shared')]",
         "[resourceId('Microsoft.Resources/deployments', 'network')]"
@@ -2165,7 +2151,7 @@
     {
       "name": "virtual-machines",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-05-01",
+      "apiVersion": "2024-03-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'loadbalancer')]",
         "[resourceId('Microsoft.Resources/deployments', 'kibana-ip')]"
