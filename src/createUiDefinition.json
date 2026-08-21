@@ -488,6 +488,10 @@
                       "value": "7TiB"
                     },
                     {
+                      "label": "7.5TiB",
+                      "value": "7.5TiB"
+                    },
+                    {
                       "label": "8TiB",
                       "value": "8TiB"
                     },
