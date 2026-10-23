@@ -190,7 +190,7 @@
   },
   "resources": [
     {
-      "condition": "[equals(parameters('topologySettings').dataNodesAreMasterEligible, 'No')]",
+      "condition": "[and(equals(parameters('topologySettings').dataNodesAreMasterEligible, 'No'), not(equals(parameters('topologySettings').deploymentBatch, 'DataNodes')))]",
       "name": "master-nodes",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2024-03-01",
@@ -240,7 +240,7 @@
       "properties": "[variables('vmNsgProperties')[if(variables('standardExternalLoadBalancer'), 1, 0)]]"
     },
     {
-      "condition": "[greater(parameters('topologySettings').vmClientNodeCount, 0)]",
+      "condition": "[and(greater(parameters('topologySettings').vmClientNodeCount, 0), not(equals(parameters('topologySettings').deploymentBatch, 'DataNodes')))]",
       "name": "client-nodes",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2024-03-01",
@@ -283,6 +283,7 @@
       }
     },
     {
+      "condition": "[not(equals(parameters('topologySettings').deploymentBatch, 'Remaining'))]",
       "name": "data-nodes",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2024-03-01",
@@ -328,6 +329,7 @@
       }
     },
     {
+      "condition": "[not(equals(parameters('topologySettings').deploymentBatch, 'DataNodes'))]",
       "name": "jumpbox",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2024-03-01",
@@ -364,6 +366,7 @@
       }
     },
     {
+      "condition": "[not(equals(parameters('topologySettings').deploymentBatch, 'DataNodes'))]",
       "name": "kibana",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2024-03-01",
@@ -403,7 +406,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('topologySettings').logstash, 'Yes')]",
+      "condition": "[and(equals(parameters('topologySettings').logstash, 'Yes'), not(equals(parameters('topologySettings').deploymentBatch, 'DataNodes')))]",
       "name": "logstash",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2024-03-01",
@@ -446,7 +449,7 @@
   ],
   "outputs": {
     "jumpboxssh": {
-      "value": "[reference('jumpbox').outputs.ssh.value]",
+      "value": "[if(equals(parameters('topologySettings').deploymentBatch, 'DataNodes'), 'N/A', reference('jumpbox').outputs.ssh.value)]",
       "type": "string"
     }
   }

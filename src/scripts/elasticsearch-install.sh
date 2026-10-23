@@ -37,6 +37,7 @@ help()
     echo "    -x      configure as a dedicated master node"
     echo "    -y      configure as client only node (no master, no data)"
     echo "    -z      configure as data node (no master)"
+    echo "    -q      reuse existing data disks and do not bootstrap a new cluster"
     echo "    -l      install X-Pack plugin (<6.3.0) or apply trial license for Platinum features (6.3.0+)"
     echo "    -L      <plugin;plugin> install additional plugins"
     echo "    -C      <yaml\nyaml> additional yaml configuration"
@@ -117,6 +118,7 @@ MANDATORY_PLUGINS=""
 CLIENT_ONLY_NODE=0
 DATA_ONLY_NODE=0
 MASTER_ONLY_NODE=0
+REUSE_EXISTING_DATA_DISKS=0
 
 # Node Type : 'master', 'client', or 'data'
 NODE_TYPE=""
@@ -157,7 +159,7 @@ SAML_METADATA_URI=""
 SAML_SP_URI=""
 
 #Loop through options passed
-while getopts :n:m:v:A:R:M:K:S:F:Z:p:a:k:L:C:B:E:H:G:T:W:V:J:N:D:O:P:b:g:xyzldjh optname; do
+while getopts :n:m:v:A:R:M:K:S:F:Z:p:a:k:L:C:B:E:H:G:T:W:V:J:N:D:O:P:b:g:xyzldjhq optname; do
   log "Option $optname set"
   case $optname in
     n) #set cluster name
@@ -207,6 +209,9 @@ while getopts :n:m:v:A:R:M:K:S:F:Z:p:a:k:L:C:B:E:H:G:T:W:V:J:N:D:O:P:b:g:xyzldjh
     z) #data node
       DATA_ONLY_NODE=1
       NODE_TYPE="data"
+      ;;
+    q) #reuse existing data disks; do not bootstrap a new cluster
+      REUSE_EXISTING_DATA_DISKS=1
       ;;
     l) #install X-Pack
       INSTALL_XPACK=1
@@ -308,6 +313,19 @@ else
     UNICAST_HOSTS="${UNICAST_HOSTS%?}]"
 fi
 
+if [ ${REUSE_EXISTING_DATA_DISKS} -eq 1 ]; then
+    UNICAST_HOSTS='['
+    for i in $(seq 0 $((DATANODE_COUNT-1))); do
+        UNICAST_HOSTS="$UNICAST_HOSTS\"${NAMESPACE_PREFIX}data-$i${UNICAST_HOST_PORT}\","
+    done
+    if [ ${CLUSTER_USES_DEDICATED_MASTERS} -ne 0 ]; then
+        for i in 0 1 2; do
+            UNICAST_HOSTS="$UNICAST_HOSTS\"${NAMESPACE_PREFIX}master-$i${UNICAST_HOST_PORT}\","
+        done
+    fi
+    UNICAST_HOSTS="${UNICAST_HOSTS%?}]"
+fi
+
 if [[ ${INSTALL_XPACK} -ne 0 || ${BASIC_SECURITY} -ne 0 ]]; then
     log "using bootstrap password as the seed password"
     SEED_PASSWORD="$BOOTSTRAP_PASSWORD"
@@ -342,6 +360,55 @@ format_data_disks()
         fi
         log "[format_data_disks] finished partition and format attached disks"
     fi
+}
+
+# Mount a data disk that already has a filesystem. Do not partition or format it.
+mount_existing_data_disk()
+{
+    log "[mount_existing_data_disk] mounting attached data disk without formatting"
+    local DEV=""
+    local candidate
+    for candidate in /dev/disk/azure/data/by-lun/lun0 /dev/disk/azure/scsi1/lun0; do
+        if [[ -e "$candidate" ]]; then
+            DEV="$candidate"
+            break
+        fi
+    done
+    if [[ -z "$DEV" ]]; then
+        log "[mount_existing_data_disk] no data disk found at lun 0"
+        exit 1
+    fi
+
+    local PART
+    PART=$(lsblk -lnpo NAME,TYPE "$DEV" | awk '$2=="part" { print $1; exit }')
+    local SRC="$DEV"
+    if [[ -n "$PART" ]]; then
+        SRC="$PART"
+    fi
+    if ! blkid "$SRC" >/dev/null 2>&1; then
+        log "[mount_existing_data_disk] $SRC has no filesystem. Refusing to format."
+        exit 1
+    fi
+
+    local MOUNTPOINT=/datadisks/disk1
+    mkdir -p "$MOUNTPOINT"
+    local UUID
+    UUID=$(blkid -s UUID -o value "$SRC")
+    if [[ -z "$UUID" ]]; then
+        log "[mount_existing_data_disk] $SRC has no UUID"
+        exit 1
+    fi
+    if ! grep -q "$UUID" /etc/fstab; then
+        echo "UUID=$UUID $MOUNTPOINT ext4 defaults,nofail,noatime 0 2" >> /etc/fstab
+    fi
+    if ! mountpoint -q "$MOUNTPOINT"; then
+        mount "$MOUNTPOINT" || mount "$SRC" "$MOUNTPOINT"
+    fi
+    if ! mountpoint -q "$MOUNTPOINT"; then
+        log "[mount_existing_data_disk] failed to mount $SRC at $MOUNTPOINT"
+        exit 1
+    fi
+    log "[mount_existing_data_disk] mounted $SRC at $MOUNTPOINT"
 }
 
 # Configure Elasticsearch Data Disk Folder and Permissions
@@ -955,9 +1022,14 @@ configure_elasticsearch_yaml()
       echo "discovery.zen.ping.unicast.hosts: $UNICAST_HOSTS" >> $ES_CONF
       echo "discovery.zen.minimum_master_nodes: $MINIMUM_MASTER_NODES" >> $ES_CONF
     else
-      log "[configure_elasticsearch_yaml] update configuration with discovery.seed_hosts and cluster.initial_master_nodes set to $UNICAST_HOSTS"
+      log "[configure_elasticsearch_yaml] update configuration with discovery.seed_hosts set to $UNICAST_HOSTS"
       echo "discovery.seed_hosts: $UNICAST_HOSTS" >> $ES_CONF
-      echo "cluster.initial_master_nodes: $UNICAST_HOSTS" >> $ES_CONF
+      if [ ${REUSE_EXISTING_DATA_DISKS} -eq 0 ]; then
+        log "[configure_elasticsearch_yaml] set cluster.initial_master_nodes to $UNICAST_HOSTS"
+        echo "cluster.initial_master_nodes: $UNICAST_HOSTS" >> $ES_CONF
+      else
+        log "[configure_elasticsearch_yaml] recovery deploy, cluster.initial_master_nodes left unset"
+      fi
     fi
 
     # Configure Elasticsearch node type
@@ -966,8 +1038,13 @@ configure_elasticsearch_yaml()
         log "[configure_elasticsearch_yaml] configure node as master only"
         echo "node.roles: [ master ]" >> $ES_CONF
     elif [ ${DATA_ONLY_NODE} -ne 0 ]; then
-        log "[configure_elasticsearch_yaml] configure node as data only"
-        echo "node.roles: [ data ]" >> $ES_CONF
+        if [ ${REUSE_EXISTING_DATA_DISKS} -eq 1 ]; then
+            log "[configure_elasticsearch_yaml] recovery data node is master-eligible so an existing cluster can elect it"
+            echo "node.roles: [ master, data ]" >> $ES_CONF
+        else
+            log "[configure_elasticsearch_yaml] configure node as data only"
+            echo "node.roles: [ data ]" >> $ES_CONF
+        fi
     elif [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
         log "[configure_elasticsearch_yaml] configure node as client only"
         echo "node.roles: [ ]" >> $ES_CONF
@@ -1249,7 +1326,11 @@ if systemctl -q is-active elasticsearch.service; then
   exit 0
 fi
 
-format_data_disks
+if [[ ${REUSE_EXISTING_DATA_DISKS} -eq 1 && ${DATA_ONLY_NODE} -eq 1 ]]; then
+  mount_existing_data_disk
+else
+  format_data_disks
+fi
 
 log "[apt-get] updating apt-get"
 (apt-get -y update || (sleep 15; apt-get -y update)) > /dev/null
@@ -1288,12 +1369,22 @@ configure_os_properties
 
 port_forward
 
-start_systemd
+if [[ ${REUSE_EXISTING_DATA_DISKS} -eq 1 && ${DATA_ONLY_NODE} -eq 1 ]]; then
+  log "[elasticsearch] recovery data node left stopped for unsafe-bootstrap"
+  systemctl disable elasticsearch.service || true
+  systemctl stop elasticsearch.service || true
+else
+  start_systemd
+fi
 
 # patch roles and users through the REST API which is a tad trickier
 if [[ ${INSTALL_XPACK} -ne 0 || ${BASIC_SECURITY} -ne 0 ]]; then
-  wait_for_started
-  apply_security_settings
+  if [[ ${REUSE_EXISTING_DATA_DISKS} -eq 1 && ${DATA_ONLY_NODE} -eq 1 ]]; then
+    log "[elasticsearch] skipping security bootstrap until Elasticsearch is started"
+  else
+    wait_for_started
+    apply_security_settings
+  fi
 fi
 
 ELAPSED_TIME=$(($SECONDS - $START_TIME))

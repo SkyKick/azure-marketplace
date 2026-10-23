@@ -44,7 +44,7 @@
   },
   "resources": [
     {
-      "condition": "[greater(parameters('storageSettings').dataDisks, 0)]",
+      "condition": "[and(greater(parameters('storageSettings').dataDisks, 0), not(equals(parameters('storageSettings').deploymentBatch, 'Remaining')))]",
       "name": "[concat(variables('namespace'), copyindex(), '-vm-creation')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2024-03-01",
@@ -71,17 +71,7 @@
                 {
                   "name": "disks",
                   "count": "[variables('diskCount')]",
-                  "input": {
-                    "name": "[concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1))]",
-                    "diskSizeGB": "[parameters('storageSettings').diskSize]",
-                    "lun": "[copyIndex('disks')]",
-                    "managedDisk": {
-                      "storageAccountType": "PremiumV2_LRS"
-                      //"storageAccountType": "[parameters('storageSettings').accountType]"
-                    },
-                    "caching": "None",
-                    "createOption": "Empty"
-                  }
+                  "input": "[if(parameters('storageSettings').reuseExistingDataDisks, createObject('name', concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1)), 'lun', copyIndex('disks'), 'caching', 'None', 'createOption', 'Attach', 'managedDisk', createObject('id', resourceId('Microsoft.Compute/disks', concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1))))), createObject('name', concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1)), 'diskSizeGB', parameters('storageSettings').diskSize, 'lun', copyIndex('disks'), 'caching', 'None', 'createOption', 'Empty', 'managedDisk', createObject('storageAccountType', 'PremiumV2_LRS')))]"
                 }
               ]
             }
@@ -93,7 +83,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('storageSettings').dataDisks, 0)]",
+      "condition": "[and(equals(parameters('storageSettings').dataDisks, 0), not(equals(parameters('storageSettings').deploymentBatch, 'Remaining')))]",
       "name": "[concat(variables('namespace'), copyindex(), '-vm-nodisks-creation')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2024-03-01",

@@ -748,6 +748,25 @@
         "description": "Number of disks to attach to each data node in RAID 0 setup. If the number of disks selected is more than can be attached to the data node VM size, the maximum number of disks that can be attached will be used. If 1 disk is selected, it is not RAIDed. If 0 disks are selected, the temporary disk will be used to store Elasticsearch data. IMPORTANT: The temporary disk is ephemeral in nature so be sure you know the trade-offs when choosing 0 disks."
       }
     },
+    "reuseExistingDataDisks": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Attach existing data disks named <prefix>data-<index>-datadisk<n> instead of creating empty disks. Used by a recovery deploy."
+      }
+    },
+    "deploymentBatch": {
+      "type": "string",
+      "defaultValue": "All",
+      "allowedValues": [
+        "All",
+        "DataNodes",
+        "Remaining"
+      ],
+      "metadata": {
+        "description": "All deploys every node. DataNodes deploys only data nodes. Remaining deploys masters, clients, Kibana, and the jumpbox."
+      }
+    },
     "vmDataDiskSize": {
       "type": "string",
       "defaultValue": "1TiB",
@@ -1984,10 +2003,14 @@
       "logstashYaml": "[parameters('logstashAdditionalYaml')]",
       "logstashKeystorePwd": "[if(not(empty(parameters('logstashKeystorePassword'))),parameters('logstashKeystorePassword'),uniqueString(resourceGroup().id, deployment().name, parameters('securityLogstashPassword')))]",
       "jumpbox": "[parameters('jumpbox')]",
+      "reuseExistingDataDisks": "[parameters('reuseExistingDataDisks')]",
+      "deploymentBatch": "[parameters('deploymentBatch')]",
       "dataNodeStorageSettings": {
         "accountType": "[variables('resolvedStorageAccountType')]",
         "diskSize": "[variables('dataDiskSizes')[parameters('vmDataDiskSize')]]",
-        "dataDisks": "[variables('resolvedDataDiskCount')]"
+        "dataDisks": "[variables('resolvedDataDiskCount')]",
+        "reuseExistingDataDisks": "[parameters('reuseExistingDataDisks')]",
+        "deploymentBatch": "[parameters('deploymentBatch')]"
       },
       "dataLoadBalancerBackEndPools": "[variables('dataLoadBalancerOptions')[variables('clientResourceIndex')].backendPools]",
       "loadBalancerBackEndPools": "[variables('lbBackEndPoolsAdded').backendPools]"
