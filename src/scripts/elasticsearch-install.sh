@@ -368,14 +368,27 @@ mount_existing_data_disk()
     log "[mount_existing_data_disk] mounting attached data disk without formatting"
     local DEV=""
     local candidate
-    for candidate in /dev/disk/azure/data/by-lun/lun0 /dev/disk/azure/scsi1/lun0; do
-        if [[ -e "$candidate" ]]; then
-            DEV="$candidate"
+    local attempt
+    # NVMe data disks are /dev/disk/azure/data/by-lun/0. SCSI disks use lun0.
+    for attempt in $(seq 1 30); do
+        for candidate in \
+            /dev/disk/azure/data/by-lun/0 \
+            /dev/disk/azure/data/by-lun/lun0 \
+            /dev/disk/azure/scsi1/lun0
+        do
+            if [[ -e "$candidate" ]]; then
+                DEV="$candidate"
+                break
+            fi
+        done
+        if [[ -n "$DEV" ]]; then
             break
         fi
+        sleep 2
     done
     if [[ -z "$DEV" ]]; then
         log "[mount_existing_data_disk] no data disk found at lun 0"
+        ls -l /dev/disk/azure/data/by-lun /dev/disk/azure/scsi1 2>/dev/null || true
         exit 1
     fi
 
