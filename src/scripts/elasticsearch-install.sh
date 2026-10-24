@@ -1051,13 +1051,8 @@ configure_elasticsearch_yaml()
         log "[configure_elasticsearch_yaml] configure node as master only"
         echo "node.roles: [ master ]" >> $ES_CONF
     elif [ ${DATA_ONLY_NODE} -ne 0 ]; then
-        if [ ${REUSE_EXISTING_DATA_DISKS} -eq 1 ]; then
-            log "[configure_elasticsearch_yaml] recovery data node is master-eligible so an existing cluster can elect it"
-            echo "node.roles: [ master, data ]" >> $ES_CONF
-        else
-            log "[configure_elasticsearch_yaml] configure node as data only"
-            echo "node.roles: [ data ]" >> $ES_CONF
-        fi
+        log "[configure_elasticsearch_yaml] configure node as data only"
+        echo "node.roles: [ data ]" >> $ES_CONF
     elif [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
         log "[configure_elasticsearch_yaml] configure node as client only"
         echo "node.roles: [ ]" >> $ES_CONF
