@@ -37,6 +37,7 @@
   },
   "resources": [
     {
+      "condition": "[and(equals(parameters('azureCloudStorageAccount').install, 'Yes'), empty(parameters('azureCloudStorageAccount').name))]",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
       "apiVersion": "2019-04-01",
@@ -54,11 +55,11 @@
   ],
   "outputs": {
     "sharedStorageAccountKey": {
-      "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value]",
+      "value": "[if(and(equals(parameters('azureCloudStorageAccount').install, 'Yes'), empty(parameters('azureCloudStorageAccount').name)), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value, '')]",
       "type": "string"
     },
     "sharedStorageAccountSuffix": {
-      "value": "[replace(replace(reference(parameters('storageAccountName')).primaryEndpoints.blob, concat('https://', parameters('storageAccountName'), '.blob.'), ''), '/', '')]",
+      "value": "[if(and(equals(parameters('azureCloudStorageAccount').install, 'Yes'), empty(parameters('azureCloudStorageAccount').name)), replace(replace(reference(parameters('storageAccountName')).primaryEndpoints.blob, concat('https://', parameters('storageAccountName'), '.blob.'), ''), '/', ''), '')]",
       "type": "string"
     },
     "existingStorageAccountKey": {
