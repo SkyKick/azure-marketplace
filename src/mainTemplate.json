@@ -76,6 +76,17 @@
         "description": "The external load balancer SKU type. Only valid when loadBalancerType is 'external'"
       }
     },
+    "externalLbNsgEnvironment": {
+      "type": "string",
+      "defaultValue": "prod",
+      "allowedValues": [
+        "prod",
+        "dev"
+      ],
+      "metadata": {
+        "description": "Selects which AKS egress prefixes are allowed on the Elasticsearch external load balancer NSG. prod allows all production AKS cluster outbound IPs; dev allows the two dev AKS clusters and the QA AKS cluster."
+      }
+    },
     "azureCloudPlugin": {
       "type": "string",
       "allowedValues": [
@@ -2009,7 +2020,8 @@
         "addressPrefix": "[parameters('vNetNewAppGatewaySubnetAddressPrefix')]"
       },
       "internalSku": "[parameters('loadBalancerInternalSku')]",
-      "externalSku": "[parameters('loadBalancerExternalSku')]"
+      "externalSku": "[parameters('loadBalancerExternalSku')]",
+      "externalLbNsgEnvironment": "[parameters('externalLbNsgEnvironment')]"
     },
     "commonVmSettings": {
       "namespacePrefix": "[parameters('vmHostNamePrefix')]",

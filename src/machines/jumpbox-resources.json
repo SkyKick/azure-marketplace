@@ -82,7 +82,7 @@
       "australiaeast": "20.92.240.8/31"
     },
     "normalizedLocation": "[replace(toLower(parameters('location')), ' ', '')]",
-    "jumpboxSourcePrefix": "[if(contains(variables('regionalSourcePrefixes'), variables('normalizedLocation')), variables('regionalSourcePrefixes')[variables('normalizedLocation')], 'Internet')]"
+    "jumpboxSourcePrefix": "[variables('regionalSourcePrefixes')[variables('normalizedLocation')]]"
   },
   "resources": [
     {
