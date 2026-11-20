@@ -110,6 +110,16 @@ install_nginx()
 
 restart_nginx()
 {
+  local TEST_OUT
+  TEST_OUT="$(nginx -t 2>&1)"
+  local TEST_RC=$?
+  log "$TEST_OUT"
+  if [ "$TEST_RC" -ne 0 ]; then
+    log "nginx config test failed"
+    cat "$NGINX_DIR/nginx.conf"
+    cat "$DEFAULT_SITE_PATH"
+    exit "$TEST_RC"
+  fi
   systemctl restart nginx
 }
 
@@ -126,11 +136,11 @@ create_basic_auth_file()
 
 install_certificate()
 {
-  mkdir $CERT_DIR
-  echo ${PFX_B64} | base64 -d >> $CERT_DIR/host.pfx
-  openssl pkcs12 -in $CERT_DIR/host.pfx -clcerts -nokeys -out $CRT_PATH -passin pass:"$PFX_PWD"
-  openssl pkcs12 -in $CERT_DIR/host.pfx -nodes -passin pass:"$PFX_PWD" | openssl rsa -out $KEY_PATH
-  rm $CERT_DIR/host.pfx
+  mkdir -p "$CERT_DIR"
+  printf '%s' "$PFX_B64" | base64 -d > "$CERT_DIR/host.pfx"
+  openssl pkcs12 -in "$CERT_DIR/host.pfx" -clcerts -nokeys -out "$CRT_PATH" -passin pass:"$PFX_PWD"
+  openssl pkcs12 -in "$CERT_DIR/host.pfx" -nodes -passin pass:"$PFX_PWD" | openssl rsa -out "$KEY_PATH"
+  rm "$CERT_DIR/host.pfx"
 
 
   # ---- Auto-fetch intermediate from AIA ----
@@ -206,41 +216,53 @@ write_server_config()
 {
   rm $NGINX_DIR/nginx.conf
 
+  # nginx `if` can test only one variable. Concatenation is valid as a `map`
+  # source, not as an `if` condition — that is what broke `nginx.service`.
   local ACCESS_MAPS=""
-  if [ -n "$FRONT_DOOR_IDS" ] || [ -n "$ALLOWED_IPS" ]; then
-    ACCESS_MAPS="
+  local saved_ifs="$IFS"
+  local id
+  local ip
+  if [ -n "$FRONT_DOOR_IDS" ]; then
+    log "Allowing Azure Front Door IDs: $FRONT_DOOR_IDS"
+    ACCESS_MAPS="${ACCESS_MAPS}
 	map \$http_x_azure_fdid \$front_door_ok {
 		default 0;"
-    local id
-    local ip
-    local IFS=','
-    if [ -n "$FRONT_DOOR_IDS" ]; then
-      log "Allowing Azure Front Door IDs: $FRONT_DOOR_IDS"
-      for id in $FRONT_DOOR_IDS; do
-        id="${id#"${id%%[![:space:]]*}"}"
-        id="${id%"${id##*[![:space:]]}"}"
-        if [ -n "$id" ]; then
-          ACCESS_MAPS="${ACCESS_MAPS}
+    IFS=','
+    for id in $FRONT_DOOR_IDS; do
+      id="${id#"${id%%[![:space:]]*}"}"
+      id="${id%"${id##*[![:space:]]}"}"
+      if [ -n "$id" ]; then
+        ACCESS_MAPS="${ACCESS_MAPS}
 		\"${id}\" 1;"
-        fi
-      done
-    fi
+      fi
+    done
+    IFS="$saved_ifs"
     ACCESS_MAPS="${ACCESS_MAPS}
-	}
+	}"
+  fi
+  if [ -n "$ALLOWED_IPS" ]; then
+    log "Allowing nginx source IPs: $ALLOWED_IPS"
+    ACCESS_MAPS="${ACCESS_MAPS}
 	geo \$allowed_ip {
 		default 0;"
-    if [ -n "$ALLOWED_IPS" ]; then
-      log "Allowing nginx source IPs: $ALLOWED_IPS"
-      for ip in $ALLOWED_IPS; do
-        ip="${ip#"${ip%%[![:space:]]*}"}"
-        ip="${ip%"${ip##*[![:space:]]}"}"
-        if [ -n "$ip" ]; then
-          ACCESS_MAPS="${ACCESS_MAPS}
+    IFS=','
+    for ip in $ALLOWED_IPS; do
+      ip="${ip#"${ip%%[![:space:]]*}"}"
+      ip="${ip%"${ip##*[![:space:]]}"}"
+      if [ -n "$ip" ]; then
+        ACCESS_MAPS="${ACCESS_MAPS}
 		${ip} 1;"
-        fi
-      done
-    fi
+      fi
+    done
+    IFS="$saved_ifs"
     ACCESS_MAPS="${ACCESS_MAPS}
+	}"
+  fi
+  if [ -n "$FRONT_DOOR_IDS" ] && [ -n "$ALLOWED_IPS" ]; then
+    ACCESS_MAPS="${ACCESS_MAPS}
+	map \"\$front_door_ok\$allowed_ip\" \$request_allowed {
+		default 1;
+		00 0;
 	}"
   fi
 
@@ -285,9 +307,19 @@ write_site_config()
   rm $DEFAULT_SITE_PATH
 
   local FRONTDOOR_CHECK=""
-  if [ -n "$FRONT_DOOR_IDS" ] || [ -n "$ALLOWED_IPS" ]; then
+  if [ -n "$FRONT_DOOR_IDS" ] && [ -n "$ALLOWED_IPS" ]; then
     FRONTDOOR_CHECK="
-		if (\$front_door_ok\$allowed_ip = 00) {
+		if (\$request_allowed = 0) {
+			return 403;
+		}"
+  elif [ -n "$FRONT_DOOR_IDS" ]; then
+    FRONTDOOR_CHECK="
+		if (\$front_door_ok = 0) {
+			return 403;
+		}"
+  elif [ -n "$ALLOWED_IPS" ]; then
+    FRONTDOOR_CHECK="
+		if (\$allowed_ip = 0) {
 			return 403;
 		}"
   fi

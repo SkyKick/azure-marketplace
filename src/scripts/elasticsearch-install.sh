@@ -1260,7 +1260,9 @@ if systemctl -q is-active elasticsearch.service; then
   cmp --silent /etc/elasticsearch/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml.bak
   COMPARE_YML=$?
   log "[elasticsearch] comparing elasticsearch.yml with elasticsearch.yml.bak: $COMPARE_YML"
-  $COMPARE_YML || systemctl reload-or-restart elasticsearch.service
+  if [[ $COMPARE_YML -ne 0 ]]; then
+    systemctl reload-or-restart elasticsearch.service
+  fi
   exit 0
 fi
 
