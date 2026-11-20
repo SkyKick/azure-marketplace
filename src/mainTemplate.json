@@ -90,6 +90,13 @@
         "description": "Optional comma-separated source IPs or CIDRs that client-node nginx allows in addition to azureFrontDoorIds. Leave empty for Front Door IDs only."
       }
     },
+    "scriptForceUpdateTag": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Bump this (for example a date or git SHA) to force Custom Script Extension to re-download and re-run. Leave empty so incremental deploys do not reinstall."
+      }
+    },
     "azureCloudPlugin": {
       "type": "string",
       "allowedValues": [
@@ -1414,7 +1421,8 @@
       "samlMetadataUri": "[parameters('samlMetadataUri')]",
       "samlServiceProviderUri": "[parameters('samlServiceProviderUri')]",
       "azureFrontDoorIds": "[parameters('azureFrontDoorIds')]",
-      "nginxAllowedIps": "[parameters('nginxAllowedIps')]"
+      "nginxAllowedIps": "[parameters('nginxAllowedIps')]",
+      "scriptForceUpdateTag": "[parameters('scriptForceUpdateTag')]"
     },
     "networkResourceGroupMap": {
       "new": "[resourceGroup().name]",

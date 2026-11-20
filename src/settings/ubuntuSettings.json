@@ -110,15 +110,16 @@
     "installPluginsShortOpt": "[variables('installPluginsShortOpts')[parameters('esSettings').installPlugins]]",
     "commonShortOpts": "[concat(variables('dedicatedMasterNodesShortOpt'),  variables('installPluginsShortOpt'), variables('installAzureCloudPluginShortOpt'), 'n ')]",
     "commonInstallParams": "[concat(variables('quote'), parameters('esSettings').clusterName, variables('quote'), ' -v ', variables('quote'), parameters('esSettings').version, variables('quote'), ' -m ', parameters('esSettings').heapSize, ' -A ', variables('quote'), replace(parameters('esSettings').securityAdminPwd, variables('quote'), variables('escapedQuote')), variables('quote'), ' -R ', variables('quote'), replace(parameters('esSettings').securityRemoteMonitoringPwd, variables('quote'), variables('escapedQuote')), variables('quote'), ' -K ', variables('quote'), replace(parameters('esSettings').securityKibanaPwd, variables('quote'), variables('escapedQuote')), variables('quote'), ' -S ', variables('quote'), replace(parameters('esSettings').securityLogstashPwd, variables('quote'), variables('escapedQuote')), variables('quote'), ' -F ', variables('quote'), replace(parameters('esSettings').securityBeatsPwd, variables('quote'), variables('escapedQuote')), variables('quote'), ' -M ', variables('quote'), replace(parameters('esSettings').securityApmPwd, variables('quote'), variables('escapedQuote')), variables('quote'), ' -B ', variables('quote'), replace(parameters('esSettings').securityBootstrapPwd, variables('quote'), variables('escapedQuote')), variables('quote'), ' -Z ', parameters('topologySettings').vmDataNodeCount,' -p ', variables('quote'), variables('namespacePrefix'), variables('quote'), ' -a ', variables('quote'), variables('azureCloudStorageName'), variables('quote'), ' -k ', variables('quote'), variables('azureCloudStorageKey'), variables('quote'), ' -E ', variables('quote'), variables('azureCloudStorageSuffix'), variables('quote'), ' -L ', variables('quote'), parameters('esSettings').installAdditionalPlugins, variables('quote'), ' -C ', variables('quote'), replace(replace(parameters('esSettings').yamlConfiguration, variables('quote'), variables('escapedQuote')), concat(variables('backslash'), variables('doublequote')), variables('doublequote')), variables('quote'), ' -D ', variables('quote'), parameters('topologySettings').vNetLoadBalancerIp, variables('quote'), ' -O ', variables('quote'), parameters('esSettings').samlMetadataUri, variables('quote'), ' -P ', variables('quote'), variables('kibanaDomainName'), variables('quote'), ' -g ', variables('quote'), parameters('monitoringSettings').datadogAPIKey, variables('quote'))]",
+    "scriptUriSuffix": "[if(empty(parameters('esSettings').scriptForceUpdateTag), parameters('_artifactsLocationSasToken'), concat(if(empty(parameters('_artifactsLocationSasToken')), '?', concat(parameters('_artifactsLocationSasToken'), '&')), 'cb=', uniqueString(parameters('esSettings').scriptForceUpdateTag)))]",
     "ubuntuScripts": [
-      "[uri(parameters('_artifactsLocation'), concat('scripts/elasticsearch-install.sh', parameters('_artifactsLocationSasToken')))]",
-      "[uri(parameters('_artifactsLocation'), concat('scripts/kibana-install.sh', parameters('_artifactsLocationSasToken')))]",
-      "[uri(parameters('_artifactsLocation'), concat('scripts/logstash-install.sh', parameters('_artifactsLocationSasToken')))]",
-      "[uri(parameters('_artifactsLocation'), concat('scripts/vm-disk-utils-0.1.sh', parameters('_artifactsLocationSasToken')))]",
-      "[uri(parameters('_artifactsLocation'), concat('scripts/java-install.sh', parameters('_artifactsLocationSasToken')))]",
-      "[uri(parameters('_artifactsLocation'), concat('scripts/nginx-install.sh', parameters('_artifactsLocationSasToken')))]",
-      "[uri(parameters('_artifactsLocation'), concat('scripts/tools-install.sh', parameters('_artifactsLocationSasToken')))]",
-      "[uri(parameters('_artifactsLocation'), concat('scripts/datadog-install.sh', parameters('_artifactsLocationSasToken')))]"
+      "[uri(parameters('_artifactsLocation'), concat('scripts/elasticsearch-install.sh', variables('scriptUriSuffix')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/kibana-install.sh', variables('scriptUriSuffix')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/logstash-install.sh', variables('scriptUriSuffix')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/vm-disk-utils-0.1.sh', variables('scriptUriSuffix')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/java-install.sh', variables('scriptUriSuffix')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/nginx-install.sh', variables('scriptUriSuffix')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/tools-install.sh', variables('scriptUriSuffix')))]",
+      "[uri(parameters('_artifactsLocation'), concat('scripts/datadog-install.sh', variables('scriptUriSuffix')))]"
     ],
     "ubuntuSettings": {
       "imageReference": {
@@ -134,6 +135,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "[parameters('esSettings').scriptForceUpdateTag]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
@@ -146,6 +148,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "[parameters('esSettings').scriptForceUpdateTag]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
@@ -158,6 +161,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "[parameters('esSettings').scriptForceUpdateTag]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
@@ -170,6 +174,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "[parameters('esSettings').scriptForceUpdateTag]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
@@ -182,6 +187,7 @@
           "type": "CustomScript",
           "typeHandlerVersion": "2.0",
           "autoUpgradeMinorVersion": true,
+          "forceUpdateTag": "[parameters('esSettings').scriptForceUpdateTag]",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]"
           },
