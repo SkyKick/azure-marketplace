@@ -1133,6 +1133,21 @@ configure_elasticsearch()
 
     log "[configure_elasticsearch] configure elasticsearch log4j options"
     sed -i -e "/-Dlog4j2.disable.jmx=true/a -Dlog4j2.formatMsgNoLookups=true" /etc/elasticsearch/jvm.options
+
+    # Java4Shell (CVE-2026-114938): disable Base64 AVX-512 intrinsic on CPUs that have it
+    local JVM=/usr/share/elasticsearch/jdk/bin/java
+    if grep -qw avx512vbmi /proc/cpuinfo &&
+       [ -x "$JVM" ] &&
+       "$JVM" -XX:-UseBASE64Intrinsics -version >/dev/null 2>&1; then
+      log "[configure_elasticsearch] applying Java4Shell mitigation -XX:-UseBASE64Intrinsics"
+      install -d -m 0755 /etc/elasticsearch/jvm.options.d
+      printf '%s\n' '-XX:-UseBASE64Intrinsics' \
+        > /etc/elasticsearch/jvm.options.d/cve-2026-114938.options
+      chown root:elasticsearch /etc/elasticsearch/jvm.options.d/cve-2026-114938.options
+      chmod 0644 /etc/elasticsearch/jvm.options.d/cve-2026-114938.options
+    else
+      log "[configure_elasticsearch] skipping Java4Shell mitigation (CPU or bundled JDK not applicable)"
+    fi
 }
 
 configure_os_properties()

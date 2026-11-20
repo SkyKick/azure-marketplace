@@ -76,15 +76,18 @@
         "description": "The external load balancer SKU type. Only valid when loadBalancerType is 'external'"
       }
     },
-    "externalLbNsgEnvironment": {
+    "azureFrontDoorIds": {
       "type": "string",
-      "defaultValue": "prod",
-      "allowedValues": [
-        "prod",
-        "dev"
-      ],
+      "defaultValue": "",
       "metadata": {
-        "description": "Selects which AKS egress prefixes are allowed on the Elasticsearch external load balancer NSG. prod allows all production AKS cluster outbound IPs; dev allows the two dev AKS clusters and the QA AKS cluster."
+        "description": "Comma-separated Azure Front Door profile IDs. Client-node nginx allows HTTPS when X-Azure-FDID matches one of these values. Leave empty to skip the Front Door header check."
+      }
+    },
+    "nginxAllowedIps": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional comma-separated source IPs or CIDRs that client-node nginx allows in addition to azureFrontDoorIds. Leave empty for Front Door IDs only."
       }
     },
     "azureCloudPlugin": {
@@ -1409,7 +1412,9 @@
       "securityRemoteMonitoringPwd": "[parameters('securityRemoteMonitoringPassword')]",
       "securityBootstrapPwd": "[if(not(empty(parameters('securityBootstrapPassword'))),parameters('securityBootstrapPassword'),uniqueString(resourceGroup().id, deployment().name, parameters('securityAdminPassword')))]",
       "samlMetadataUri": "[parameters('samlMetadataUri')]",
-      "samlServiceProviderUri": "[parameters('samlServiceProviderUri')]"
+      "samlServiceProviderUri": "[parameters('samlServiceProviderUri')]",
+      "azureFrontDoorIds": "[parameters('azureFrontDoorIds')]",
+      "nginxAllowedIps": "[parameters('nginxAllowedIps')]"
     },
     "networkResourceGroupMap": {
       "new": "[resourceGroup().name]",
@@ -2020,8 +2025,7 @@
         "addressPrefix": "[parameters('vNetNewAppGatewaySubnetAddressPrefix')]"
       },
       "internalSku": "[parameters('loadBalancerInternalSku')]",
-      "externalSku": "[parameters('loadBalancerExternalSku')]",
-      "externalLbNsgEnvironment": "[parameters('externalLbNsgEnvironment')]"
+      "externalSku": "[parameters('loadBalancerExternalSku')]"
     },
     "commonVmSettings": {
       "namespacePrefix": "[parameters('vmHostNamePrefix')]",

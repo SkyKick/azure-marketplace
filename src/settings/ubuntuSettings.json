@@ -93,7 +93,7 @@
       "Yes": ""
     },
     "dedicatedMasterNodesShortOpt": "[variables('dedicatedMasterNodesShortOpts')[parameters('topologySettings').dataNodesAreMasterEligible]]",
-    "clientNginxInstallParams": "[concat(' -u elastic', ' -p ', variables('quote'), parameters('esSettings').securityAdminPwd, variables('quote'), ' -n 443', ' -t 9200', ' -c ', variables('quote'), parameters('esSettings').httpCertBlob, variables('quote'), ' -k ', variables('quote'), parameters('esSettings').httpCertPassword, variables('quote'))]",
+    "clientNginxInstallParams": "[concat(' -u elastic', ' -p ', variables('quote'), parameters('esSettings').securityAdminPwd, variables('quote'), ' -n 443', ' -t 9200', ' -c ', variables('quote'), parameters('esSettings').httpCertBlob, variables('quote'), ' -k ', variables('quote'), parameters('esSettings').httpCertPassword, variables('quote'), ' -f ', variables('quote'), parameters('esSettings').azureFrontDoorIds, variables('quote'), ' -i ', variables('quote'), parameters('esSettings').nginxAllowedIps, variables('quote'))]",
     "kibanaNginxInstallParams": "[concat(' -u kibana', ' -p ', variables('quote'), parameters('esSettings').securityKibanaPwd, variables('quote'), ' -n 443', ' -t 5601', ' -c ', variables('quote'), parameters('esSettings').httpCertBlob, variables('quote'), ' -k ', variables('quote'), parameters('esSettings').httpCertPassword, variables('quote'))]",
     "installAzureCloudPluginShortOpts": {
       "No": "",
