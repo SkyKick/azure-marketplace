@@ -796,6 +796,13 @@
         "description": "The disk size of each attached managed disk, 32GiB, 64GiB, 128GiB, 256 GiB, 512GiB, 1TiB, 2TiB, 4TiB, 8TiB, 16TiB and 32TiB. Default is 1TiB. For Premium Storage, this equates to P6, P10, P15, P20, P30, P40, P50, P60, P70 and P80, respectively. With PremiumSSDV2 we now have more flexibility in disk size."
       }
     },
+    "existingDataDiskNames": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Names of existing managed data disks that should be attached rather than created."
+      }
+    },
     "vmDataNodeCount": {
       "type": "int",
       "defaultValue": 3,
@@ -2011,7 +2018,8 @@
       "dataNodeStorageSettings": {
         "accountType": "[variables('resolvedStorageAccountType')]",
         "diskSize": "[variables('dataDiskSizes')[parameters('vmDataDiskSize')]]",
-        "dataDisks": "[variables('resolvedDataDiskCount')]"
+        "dataDisks": "[variables('resolvedDataDiskCount')]",
+        "existingDataDiskNames": "[parameters('existingDataDiskNames')]"
       },
       "dataLoadBalancerBackEndPools": "[variables('dataLoadBalancerOptions')[variables('clientResourceIndex')].backendPools]",
       "loadBalancerBackEndPools": "[variables('lbBackEndPoolsAdded').backendPools]"
