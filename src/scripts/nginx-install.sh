@@ -13,6 +13,8 @@ help()
     echo "    -t      Target TCP port on local machine"
     echo "    -c      BASE64-encoded PFX file for TLS connection"
     echo "    -k      Optional password for PFX file needed to extract the RSA key"
+    echo "    -f      Comma-separated Azure Front Door profile IDs (X-Azure-FDID). Empty skips the Front Door check"
+    echo "    -i      Optional comma-separated source IPs or CIDRs allowed in addition to Front Door IDs"
     echo "    -h      view this help content"
 }
 
@@ -34,9 +36,11 @@ NGINX_PORT=0
 TARGET_PORT=0
 PFX_B64=""
 PFX_PWD=""
+FRONT_DOOR_IDS=""
+ALLOWED_IPS=""
 
 #Loop through options passed
-while getopts :u:p:n:t:c:k:h optname; do
+while getopts :u:p:n:t:c:k:f:i:h optname; do
   log "Option $optname set"
   case $optname in
     u) # basic auth user name
@@ -56,6 +60,12 @@ while getopts :u:p:n:t:c:k:h optname; do
       ;;
     k) # password for the PFX file
       PFX_PWD="${OPTARG}"
+      ;;
+    f) # Azure Front Door profile IDs
+      FRONT_DOOR_IDS="${OPTARG}"
+      ;;
+    i) # optional allowed source IPs/CIDRs
+      ALLOWED_IPS="${OPTARG}"
       ;;
     h) #show help
       help
@@ -100,6 +110,16 @@ install_nginx()
 
 restart_nginx()
 {
+  local TEST_OUT
+  TEST_OUT="$(nginx -t 2>&1)"
+  local TEST_RC=$?
+  log "$TEST_OUT"
+  if [ "$TEST_RC" -ne 0 ]; then
+    log "nginx config test failed"
+    cat "$NGINX_DIR/nginx.conf"
+    cat "$DEFAULT_SITE_PATH"
+    exit "$TEST_RC"
+  fi
   systemctl restart nginx
 }
 
@@ -116,11 +136,11 @@ create_basic_auth_file()
 
 install_certificate()
 {
-  mkdir $CERT_DIR
-  echo ${PFX_B64} | base64 -d >> $CERT_DIR/host.pfx
-  openssl pkcs12 -in $CERT_DIR/host.pfx -clcerts -nokeys -out $CRT_PATH -passin pass:"$PFX_PWD"
-  openssl pkcs12 -in $CERT_DIR/host.pfx -nodes -passin pass:"$PFX_PWD" | openssl rsa -out $KEY_PATH
-  rm $CERT_DIR/host.pfx
+  mkdir -p "$CERT_DIR"
+  printf '%s' "$PFX_B64" | base64 -d > "$CERT_DIR/host.pfx"
+  openssl pkcs12 -in "$CERT_DIR/host.pfx" -clcerts -nokeys -out "$CRT_PATH" -passin pass:"$PFX_PWD"
+  openssl pkcs12 -in "$CERT_DIR/host.pfx" -nodes -passin pass:"$PFX_PWD" | openssl rsa -out "$KEY_PATH"
+  rm "$CERT_DIR/host.pfx"
 
 
   # ---- Auto-fetch intermediate from AIA ----
@@ -196,6 +216,56 @@ write_server_config()
 {
   rm $NGINX_DIR/nginx.conf
 
+  # nginx `if` can test only one variable. Concatenation is valid as a `map`
+  # source, not as an `if` condition — that is what broke `nginx.service`.
+  local ACCESS_MAPS=""
+  local saved_ifs="$IFS"
+  local id
+  local ip
+  if [ -n "$FRONT_DOOR_IDS" ]; then
+    log "Allowing Azure Front Door IDs: $FRONT_DOOR_IDS"
+    ACCESS_MAPS="${ACCESS_MAPS}
+	map \$http_x_azure_fdid \$front_door_ok {
+		default 0;"
+    IFS=','
+    for id in $FRONT_DOOR_IDS; do
+      id="${id#"${id%%[![:space:]]*}"}"
+      id="${id%"${id##*[![:space:]]}"}"
+      if [ -n "$id" ]; then
+        ACCESS_MAPS="${ACCESS_MAPS}
+		\"${id}\" 1;"
+      fi
+    done
+    IFS="$saved_ifs"
+    ACCESS_MAPS="${ACCESS_MAPS}
+	}"
+  fi
+  if [ -n "$ALLOWED_IPS" ]; then
+    log "Allowing nginx source IPs: $ALLOWED_IPS"
+    ACCESS_MAPS="${ACCESS_MAPS}
+	geo \$allowed_ip {
+		default 0;"
+    IFS=','
+    for ip in $ALLOWED_IPS; do
+      ip="${ip#"${ip%%[![:space:]]*}"}"
+      ip="${ip%"${ip##*[![:space:]]}"}"
+      if [ -n "$ip" ]; then
+        ACCESS_MAPS="${ACCESS_MAPS}
+		${ip} 1;"
+      fi
+    done
+    IFS="$saved_ifs"
+    ACCESS_MAPS="${ACCESS_MAPS}
+	}"
+  fi
+  if [ -n "$FRONT_DOOR_IDS" ] && [ -n "$ALLOWED_IPS" ]; then
+    ACCESS_MAPS="${ACCESS_MAPS}
+	map \"\$front_door_ok\$allowed_ip\" \$request_allowed {
+		default 1;
+		00 0;
+	}"
+  fi
+
   echo "user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
@@ -212,6 +282,7 @@ http {
 	types_hash_max_size 2048;
 
 	default_type application/octet-stream;
+${ACCESS_MAPS}
 
 	gzip on;
 	gzip_disable "msie6";
@@ -235,12 +306,30 @@ write_site_config()
 {
   rm $DEFAULT_SITE_PATH
 
+  local FRONTDOOR_CHECK=""
+  if [ -n "$FRONT_DOOR_IDS" ] && [ -n "$ALLOWED_IPS" ]; then
+    FRONTDOOR_CHECK="
+		if (\$request_allowed = 0) {
+			return 403;
+		}"
+  elif [ -n "$FRONT_DOOR_IDS" ]; then
+    FRONTDOOR_CHECK="
+		if (\$front_door_ok = 0) {
+			return 403;
+		}"
+  elif [ -n "$ALLOWED_IPS" ]; then
+    FRONTDOOR_CHECK="
+		if (\$allowed_ip = 0) {
+			return 403;
+		}"
+  fi
+
   echo "server {
 	listen $NGINX_PORT ssl default_server;
 	listen [::]:$NGINX_PORT ssl default_server;
 	proxy_read_timeout 300s;
 	proxy_send_timeout 300s;
-	location / {
+	location / {${FRONTDOOR_CHECK}
 		proxy_pass http://$(hostname):$TARGET_PORT;
 		auth_basic "You_Shall_Not_Pass!";
 		auth_basic_user_file $BASIC_AUTH_PATH;
