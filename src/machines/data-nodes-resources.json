@@ -72,12 +72,15 @@
                   "name": "disks",
                   "count": "[variables('diskCount')]",
                   "input": {
-                    "name": "[concat(variables('namespace'), copyIndex(), '-datadisk', copyIndex('disks', 1))]",
+                    "name": "[concat(variables('namespace'), copyindex(), '-datadisk', copyIndex('disks', 1))]",
+                    "diskSizeGB": "[parameters('storageSettings').diskSize]",
                     "lun": "[copyIndex('disks')]",
+                    "managedDisk": {
+                      "storageAccountType": "PremiumV2_LRS"
+                      //"storageAccountType": "[parameters('storageSettings').accountType]"
+                    },
                     "caching": "None",
-                    "createOption": "[if(contains(parameters('storageSettings').existingDataDiskNames, concat(variables('namespace'), copyIndex(), '-datadisk', copyIndex('disks', 1))), 'Attach', 'Empty')]",
-                    "diskSizeGB": "[if(contains(parameters('storageSettings').existingDataDiskNames, concat(variables('namespace'), copyIndex(), '-datadisk', copyIndex('disks', 1))), json('null'), parameters('storageSettings').diskSize)]",
-                    "managedDisk": "[if(contains(parameters('storageSettings').existingDataDiskNames, concat(variables('namespace'), copyIndex(), '-datadisk', copyIndex('disks', 1))), createObject('id', resourceId('Microsoft.Compute/disks', concat(variables('namespace'), copyIndex(), '-datadisk', copyIndex('disks', 1)))), createObject('storageAccountType', 'PremiumV2_LRS'))]"
+                    "createOption": "Empty"
                   }
                 }
               ]
