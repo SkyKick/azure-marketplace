@@ -103,9 +103,60 @@ DEFAULT_SITE_PATH=$NGINX_DIR/sites-available/default
 # Installation functions
 #########################
 
+NGINX_MIN_VERSION="1.30.7"
+NGINX_SIGNING_FINGERPRINT="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62"
+
 install_nginx()
 {
-  apt-get -yq install nginx
+  # Ubuntu jammy ships 1.18. WIZ-ADV-2026-207 (CVE-2026-123007 / CVE-2026-123633)
+  # is fixed in OSS 1.30.7 stable. Install from nginx.org and pin so apt does not
+  # pull Ubuntu's package back in.
+  if ! apt-get -yq \
+    -o Dpkg::Options::="--force-confold" \
+    install curl gnupg2 ca-certificates lsb-release ubuntu-keyring; then
+    log "[nginx] ERROR: failed to install nginx repository prerequisites"
+    exit 1
+  fi
+
+  rm -f /usr/share/keyrings/nginx-archive-keyring.gpg
+  curl -fsSL https://nginx.org/keys/nginx_signing.key | gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg
+  local key_out
+  key_out="$(gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg 2>/dev/null || true)"
+  if ! echo "$key_out" | grep -q "$NGINX_SIGNING_FINGERPRINT"; then
+    log "[nginx] ERROR: nginx.org signing key fingerprint mismatch"
+    echo "$key_out"
+    exit 1
+  fi
+
+  echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] https://nginx.org/packages/ubuntu $(lsb_release -cs) nginx" \
+    > /etc/apt/sources.list.d/nginx.list
+  printf '%s\n' 'Package: *' 'Pin: origin nginx.org' 'Pin: release o=nginx' 'Pin-Priority: 900' \
+    > /etc/apt/preferences.d/99nginx
+
+  apt-get -yq update
+
+  if dpkg -s nginx-core >/dev/null 2>&1; then
+    log "[nginx] removing Ubuntu nginx so nginx.org ${NGINX_MIN_VERSION}+ can be installed"
+    apt-get -yq remove nginx nginx-common nginx-core || true
+  fi
+
+  if ! apt-get -yq \
+    -o Dpkg::Options::="--force-confold" \
+    install nginx; then
+    log "[nginx] ERROR: failed to install nginx"
+    exit 1
+  fi
+  mkdir -p "$NGINX_DIR/sites-available" "$NGINX_DIR/sites-enabled" "$CERT_DIR"
+  ln -sfn "$DEFAULT_SITE_PATH" "$NGINX_DIR/sites-enabled/default"
+  rm -f "$NGINX_DIR/conf.d/default.conf"
+
+  local ver
+  ver="$(nginx -v 2>&1 | sed -n 's/.*nginx\///p')"
+  log "[nginx] installed $ver"
+  if ! dpkg --compare-versions "$ver" ge "$NGINX_MIN_VERSION"; then
+    log "[nginx] ERROR: expected nginx >= ${NGINX_MIN_VERSION}, got ${ver}"
+    exit 1
+  fi
 }
 
 restart_nginx()
@@ -120,7 +171,13 @@ restart_nginx()
     cat "$DEFAULT_SITE_PATH"
     exit "$TEST_RC"
   fi
+  systemctl enable nginx
   systemctl restart nginx
+  if ! systemctl is-active --quiet nginx; then
+    log "nginx service failed to start"
+    systemctl --no-pager --full status nginx || true
+    exit 1
+  fi
 }
 
 # These utils contain the 'htpasswd'
@@ -266,7 +323,7 @@ write_server_config()
 	}"
   fi
 
-  echo "user www-data;
+  echo "user nginx;
 worker_processes auto;
 pid /run/nginx.pid;
 
@@ -327,6 +384,7 @@ write_site_config()
   echo "server {
 	listen $NGINX_PORT ssl default_server;
 	listen [::]:$NGINX_PORT ssl default_server;
+	http2 off;
 	proxy_read_timeout 300s;
 	proxy_send_timeout 300s;
 	location / {${FRONTDOOR_CHECK}
@@ -371,3 +429,5 @@ write_site_config
 
 log "Re-start NGINX"
 restart_nginx
+
+log "[SUCCESS] NGINX install completed"
